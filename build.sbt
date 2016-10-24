@@ -27,6 +27,8 @@ scalacOptions ++= Seq(
   "-Xfuture"
 )
 
+scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnings")
+
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.0",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",

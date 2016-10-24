@@ -103,8 +103,8 @@ object Validation {
     def ? : Option[A] = Option(self)
 
     /** Returns a [[scala.util.Left]] containing the given
-      * argument `left` if this $option is empty, or
-      * a [[scala.util.Right]] containing this $option's value if
+      * argument `left` if this `self` is empty, or
+      * a [[scala.util.Right]] containing this `o`'s value if
       * this is nonempty.
       *
       * @param left the expression to evaluate and return if this is empty
@@ -121,8 +121,8 @@ object Validation {
   implicit class OptionOps[+A](val o: Option[A]) extends AnyVal {
 
     /** Returns a [[scala.util.Left]] containing the given
-      * argument `left` if this $option is empty, or
-      * a [[scala.util.Right]] containing this $option's value if
+      * argument `left` if this `o` is empty, or
+      * a [[scala.util.Right]] containing this `o`'s value if
       * this is nonempty.
       *
       * @param left the expression to evaluate and return if this is empty
@@ -140,8 +140,8 @@ object Validation {
 
   implicit class TryOps[+A](val t: Try[A]) extends AnyVal {
     /** Returns a [[scala.util.Left]] containing the given
-      * argument `left` if this $try has failed, or
-      * a [[scala.util.Right]] containing this $try has been successful.
+      * argument `left` if this `t` has failed, or
+      * a [[scala.util.Right]] containing this `t` has been successful.
       *
       * @param left the expression to evaluate and return if this is a failure
       * @see toLeft
