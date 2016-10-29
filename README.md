@@ -7,7 +7,7 @@
 
   config duration "path" // FiniteDuration
 
-  config durationOpt "path" // Option[FiniteDuration
+  config durationOpt "path" // Option[FiniteDuration]
 
   config intOpt "path" // Option[Int]
 
