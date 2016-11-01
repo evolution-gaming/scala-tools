@@ -30,7 +30,7 @@ scalacOptions ++= Seq(
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnings")
 
 libraryDependencies ++= Seq(
-  "com.github.t3hnar" %% "scalax" % "3.0",
+  "com.github.t3hnar" %% "scalax" % "3.1",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe" % "config" % "1.3.1",
   "org.scalatest" %% "scalatest" % "3.0.0" % Test
