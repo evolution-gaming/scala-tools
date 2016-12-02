@@ -146,6 +146,15 @@ class ValidationSpec extends FunSuite with Matchers {
     "".? shouldEqual Some("")
   }
 
+  test("allValid") {
+    Nil allValid { _: Int => "ko".ko } shouldEqual ().ok
+    Iterable(1) allValid { _ == 1 trueOr "ko" } shouldEqual ().ok
+    Iterable(0) allValid { _ == 1 trueOr "ko" } shouldEqual "ko".ko
+    Iterable(2, 4, 5, 6, 7) allValid { x =>
+      x % 2 == 0 trueOr s"$x.ko"
+    } shouldEqual "5.ko".ko
+  }
+
   implicit def eitherEquality[L, R]: Equality[Either[L, R]] = new Equality[Either[L, R]] {
     def areEqual(a: Either[L, R], b: Any) = a == b
   }

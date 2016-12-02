@@ -2,6 +2,7 @@ package com.evolutiongaming.util
 
 import com.github.t3hnar.scalax._
 
+import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -184,6 +185,28 @@ object Validation {
   implicit class IterableOps[A](val self: Iterable[A]) extends AnyVal {
 
     def ?>>[B](left: => B): Either[B, Iterable[A]] = if (self.isEmpty) Left(left) else Right(self)
+
+    /**
+      * Checks that all elements in `self` are valid by applying the `test` function to each.
+      * If so, returns a [[scala.util.Right]] otherwise returns the first [[scala.util.Left]]
+      * encountered.
+      *
+      * @param test function to apply to each element
+      * @tparam T type of error the `test` function returns
+      */
+    def allValid[T](test: A => Either[T, Unit]): Either[T, Unit] = {
+      @tailrec
+      def loop(it: Iterable[A]): Either[T, Unit] = {
+        it.headOption match {
+          case Some(a) => test(a) match {
+            case l@Left(_) => l
+            case Right(_)  => loop(it.tail)
+          }
+          case None    => ().ok
+        }
+      }
+      loop(self)
+    }
   }
 
   implicit class VOps[T](val self: V[T]) extends AnyVal {
