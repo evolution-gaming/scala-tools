@@ -147,12 +147,14 @@ class ValidationSpec extends FunSuite with Matchers {
   }
 
   test("allValid") {
-    Nil allValid { _: Int => "ko".ko } shouldEqual ().ok
-    Iterable(1) allValid { _ == 1 trueOr "ko" } shouldEqual ().ok
+    Nil allValid { _: Int => "ko".ko } shouldBe a[Right[_, _]]
+    Set(1) allValid { _ == 1 trueOr "ko" } shouldEqual Vector(()).ok
+    Iterable(1) allValid { _ == 1 trueOr "ko" } shouldEqual Vector(()).ok
     Iterable(0) allValid { _ == 1 trueOr "ko" } shouldEqual "ko".ko
-    Iterable(2, 4, 5, 6, 7) allValid { x =>
-      x % 2 == 0 trueOr s"$x.ko"
-    } shouldEqual "5.ko".ko
+    Iterable(0, 2, 3, 4, 5) allValid { x => x % 2 == 0 trueOr s"$x.ko" } shouldEqual "3.ko".ko
+    List(0, 1, 2) allValid[Unit, Int, List[Int]](_.ok) shouldEqual List(0, 1, 2).ok
+    Set(0, 1) allValid[Unit, Int, Set[Int]](_.ok) shouldEqual Set(1, 0).ok
+    Map("one" -> 1, "two" -> 2) allValid[Unit, (Int, String), Map[Int, String]](_.swap.ok) shouldEqual Map(1 -> "one", 2 -> "two").ok
   }
 
   implicit def eitherEquality[L, R]: Equality[Either[L, R]] = new Equality[Either[L, R]] {
