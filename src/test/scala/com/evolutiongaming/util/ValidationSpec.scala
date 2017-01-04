@@ -92,6 +92,8 @@ class ValidationSpec extends FunSuite with Matchers {
   test("|") {
     1.ok[Int] | 2 shouldEqual 1
     0.ko | 1 shouldEqual 1
+    Some("1") | "2" shouldEqual "1"
+    None | "2" shouldEqual "2"
   }
 
   test("leftMap") {
@@ -139,6 +141,9 @@ class ValidationSpec extends FunSuite with Matchers {
   test("?>>") {
     1.ok[Int] ?>> 2 shouldEqual 1.ok
     0.ko ?>> 1 shouldEqual 1.ko
+    None ?>> "ko" shouldEqual "ko".ko
+    Some("ok") ?>> "ko" shouldEqual "ok".ok
+    (null: String) ?>> "ko" shouldEqual "ko".ko
   }
 
   test("?") {
@@ -155,6 +160,19 @@ class ValidationSpec extends FunSuite with Matchers {
     List(0, 1, 2) allValid[Unit, Int, List[Int]](_.ok) shouldEqual List(0, 1, 2).ok
     Set(0, 1) allValid[Unit, Int, Set[Int]](_.ok) shouldEqual Set(1, 0).ok
     Map("one" -> 1, "two" -> 2) allValid[Unit, (Int, String), Map[Int, String]](_.swap.ok) shouldEqual Map(1 -> "one", 2 -> "two").ok
+  }
+
+  test("recover") {
+    1.ok[String] recover { case "2" => 2 } shouldEqual 1.ok
+    "2".ko[Int] recover { case "2" => 2 } shouldEqual 2.ok
+    "3".ko[Int] recover { case "2" => 2 } shouldEqual "3".ko
+  }
+
+  test("takeValid") {
+    List[Either[String, Int]]("1".ko, "2".ko, 1.ok).takeValid shouldEqual Iterable(1).ok
+    List[Either[String, Int]](1.ok).takeValid shouldEqual Iterable(1).ok
+    List[Either[String, Int]]().takeValid shouldEqual Iterable().ok
+    List[Either[String, Int]]("1".ko).takeValid shouldEqual "1".ko
   }
 
   implicit def eitherEquality[L, R]: Equality[Either[L, R]] = new Equality[Either[L, R]] {

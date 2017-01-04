@@ -78,6 +78,14 @@ object Validation {
     def ?>>[AA](x: => AA): Either[AA, B] = leftMap { _ => x }
 
     def fe[AA >: A](implicit tag: ClassTag[AA]): FutureEither[AA, B] = FutureEither[AA, B](e)
+
+    def recover[BB >: B](pf: PartialFunction[A, BB]): Either[A, BB] = {
+      e match {
+        case Right(e)                    => Right(e)
+        case Left(e) if pf isDefinedAt e => Right(pf(e))
+        case Left(e)                     => Left(e)
+      }
+    }
   }
 
   implicit class BoolToValidatedOps(val self: Boolean) extends AnyVal {
