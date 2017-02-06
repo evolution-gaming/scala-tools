@@ -168,6 +168,13 @@ class ValidationSpec extends FunSuite with Matchers {
     "3".ko[Int] recover { case "2" => 2 } shouldEqual "3".ko
   }
 
+  test("recoverWith") {
+    1.ok[String] recoverWith { case "2" => 2.ok } shouldEqual 1.ok
+    "2".ko[Int] recoverWith { case "2" => 2.ok } shouldEqual 2.ok
+    "2".ko[Int] recoverWith { case "2" => "1".ko } shouldEqual "1".ko
+    "3".ko[Int] recoverWith { case "2" => 2.ok } shouldEqual "3".ko
+  }
+
   test("takeValid") {
     List[Either[String, Int]]("1".ko, "2".ko, 1.ok).takeValid shouldEqual Iterable(1).ok
     List[Either[String, Int]](1.ok).takeValid shouldEqual Iterable(1).ok

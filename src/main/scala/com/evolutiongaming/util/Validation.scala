@@ -86,6 +86,14 @@ object Validation {
         case Left(e)                     => Left(e)
       }
     }
+
+    def recoverWith[AA >: A, BB >: B](pf: PartialFunction[A, Either[AA, BB]]): Either[AA, BB] = {
+      e match {
+        case Right(e)                    => Right(e)
+        case Left(e) if pf isDefinedAt e => pf(e)
+        case Left(e)                     => Left(e)
+      }
+    }
   }
 
   implicit class BoolToValidatedOps(val self: Boolean) extends AnyVal {
