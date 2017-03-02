@@ -4,6 +4,7 @@ import com.typesafe.config.Config
 
 import scala.concurrent.duration._
 
+@deprecated("use ConfigHelper instead", "")
 object ConfigHelpers {
 
   implicit class RichConfig(val config: Config) extends AnyVal {
