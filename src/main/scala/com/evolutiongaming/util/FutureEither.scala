@@ -31,6 +31,13 @@ sealed trait FutureEither[+L, +R] {
     (implicit ec: ExecutionContext, tag: ClassTag[LL]): FutureEither[LL, RR]
 
   def onFailure[LL >: L](f: L => Any)(implicit ec: ExecutionContext): Unit
+
+  def recoverWith[LL >: L, RR >: R](pf: PartialFunction[L, Either[LL, RR]])
+    (implicit ec: ExecutionContext, tag: ClassTag[LL]): FutureEither[LL, RR] = {
+
+    val future = for {either <- either} yield either.recoverWith(pf)
+    FutureEither(future)
+  }
 }
 
 object FutureEither {
@@ -51,7 +58,7 @@ object FutureEither {
     val (fs, es) = xs.foldLeft(List[HasFuture[L, R]]() -> List[HasEither[L, R]]()) {
       case ((fs, es), x) => x match {
         case x: HasFuture[L, R] => (x :: fs, es)
-        case x: HasEither[L, R]    => (fs, x :: es)
+        case x: HasEither[L, R] => (fs, x :: es)
       }
     }
 
