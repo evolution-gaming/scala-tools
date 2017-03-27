@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.2",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "com.typesafe" % "config" % "1.3.1",
-  "org.scalatest" %% "scalatest" % "3.0.0" % Test
+  "org.scalatest" %% "scalatest" % "3.0.1" % Test
 )
 
 licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
