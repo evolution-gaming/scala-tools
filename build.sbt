@@ -14,6 +14,8 @@ bintrayOrganization := Some("evolutiongaming")
 
 scalaVersion := "2.11.8"
 
+crossScalaVersions := Seq("2.12.1", "2.11.8")
+
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
   "-feature",
@@ -30,7 +32,7 @@ scalacOptions ++= Seq(
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnings")
 
 libraryDependencies ++= Seq(
-  "com.github.t3hnar" %% "scalax" % "3.1",
+  "com.github.t3hnar" %% "scalax" % "3.2",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe" % "config" % "1.3.1",
   "org.scalatest" %% "scalatest" % "3.0.0" % Test
