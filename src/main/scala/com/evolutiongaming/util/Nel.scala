@@ -1,6 +1,10 @@
 package com.evolutiongaming.util
 
 import scala.annotation.tailrec
+import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.GenTraversableOnce
+import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 
 /**
@@ -17,11 +21,20 @@ case class Nel[A](head: A, tail: List[A]) {
 
   def map[B](f: A => B): Nel[B] = Nel(f(head), tail.map(f))
 
-  def ++[AA >: A](l: List[AA]): Nel[AA] = Nel(head, tail ++ l)
+  def ++(xs: Nel[A]): Nel[A] = this ++ xs.toList
+
+  def ++[AA >: A](xs: GenTraversableOnce[AA]): Nel[AA] = {
+    Nel(head, tail ++ xs)
+  }
 
   def flatMap[B](f: A => Nel[B]): Nel[B] = f(head) ++ tail.flatMap(f andThen (_.toList))
 
   def ::[AA >: A](a: AA): Nel[AA] = Nel(a, head :: tail)
+
+  def :::(xs: List[A]): Nel[A] = xs match {
+    case x :: xs => Nel(x, xs ::: head :: tail)
+    case Nil     => this
+  }
 
   def filter(p: A => Boolean): List[A] = {
     val ftail = tail.filter(p)
@@ -68,7 +81,31 @@ case class Nel[A](head: A, tail: List[A]) {
 
   def mkString: String = toList.mkString
 
-  override lazy val toString: String = s"$productPrefix($head, ${ tail mkString ", " })"
+  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, A, Col[A@uncheckedVariance]]): Col[A@uncheckedVariance] = {
+    val b = cbf()
+    b += head
+    b ++= tail
+    b.result()
+  }
+
+  def toMap[K, V](implicit ev: A <:< (K, V)): Map[K, V] = {
+    val b = Map.newBuilder[K, V]
+    for {x <- this} b += x
+    b.result()
+  }
+
+  def distinct: Nel[A] = {
+    val distinct = toList.distinct
+    Nel(distinct.head, distinct.tail)
+  }
+
+  def size: Int = length
+
+  def length: Int = 1 + tail.length
+
+  def count(f: A => Boolean): Int = toList.count(f)
+
+  override def toString: String = s"$productPrefix($head, ${ tail mkString ", " })"
 }
 
 object Nel {
