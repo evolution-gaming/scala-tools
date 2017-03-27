@@ -1,6 +1,6 @@
 package com.evolutiongaming.util
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.compat.Platform
 

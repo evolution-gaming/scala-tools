@@ -5,8 +5,8 @@ import com.evolutiongaming.util.Validation._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.ClassTag
-import scala.util.Either
 import scala.util.control.NonFatal
+import scala.util.{Either, Failure}
 
 
 sealed trait FutureEither[+L, +R] {
@@ -47,7 +47,7 @@ object FutureEither {
   def apply[L: ClassTag, R](x: R): FutureEither[L, R] = HasEither[L, R](x.ok)
 
   def apply[L, R](x: Future[Either[L, R]])(implicit ex: ExecutionContext, tag: ClassTag[L]): FutureEither[L, R] = {
-    HasFuture(for {x <- x} yield x getOrElse { x => throw LeftFailure(x) })
+    HasFuture(for {x <- x} yield RightBiasedEitherOps(x) getOrElse { x => throw LeftFailure(x) })
   }
 
   def right[L, R](x: Future[R])(implicit tag: ClassTag[L]): FutureEither[L, R] = HasFuture(x)
@@ -108,12 +108,15 @@ object FutureEither {
 
       HasFuture[LL, RR](future recover {
         case x: LeftFailure         => throw x
-        case x if pf.isDefinedAt(x) => pf(x) getOrElse { l => throw LeftFailure(l) }
+        case x if pf.isDefinedAt(x) => RightBiasedEitherOps(pf(x)) getOrElse { l => throw LeftFailure(l) }
       })
     }
 
-    def onFailure[LL >: L](f: L => Any)(implicit ec: ExecutionContext) = future onFailure {
-      case LeftFailure(this.tag(l)) => f(l)
+    def onFailure[LL >: L](f: L => Any)(implicit ec: ExecutionContext) = {
+      future onComplete {
+        case Failure(LeftFailure(this.tag(l))) => f(l)
+        case _                                 =>
+      }
     }
 
     override def toString = s"$productPrefix($future)"

@@ -48,7 +48,7 @@ class ValidationSpec extends FunSuite with Matchers {
 
   test("toOption") {
     1.ok.toOption shouldEqual Some(1)
-    0.ko.toOption shouldEqual None
+    0.ko[Int].toOption shouldEqual None
   }
 
   test("toList") {
@@ -67,8 +67,8 @@ class ValidationSpec extends FunSuite with Matchers {
   }
 
   test("getOrElse") {
-    1.ok[Int] getOrElse { _ => 2 } shouldEqual 1
-    0.ko getOrElse { identity } shouldEqual 0
+    RightBiasedEitherOps(1.ok[Int]) getOrElse { _ => 2 } shouldEqual 1
+    RightBiasedEitherOps(0.ko) getOrElse { identity } shouldEqual 0
   }
 
   test("orFailure") {

@@ -1,6 +1,6 @@
 package com.evolutiongaming.util
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object LogStackTrace extends LazyLogging {
   def apply(name: String = "", depth: Int = 20): Unit = func(name, depth)()

@@ -12,7 +12,7 @@ organizationHomepage := Some(url("http://evolutiongaming.com"))
 
 bintrayOrganization := Some("evolutiongaming")
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.1"
 
 crossScalaVersions := Seq("2.12.1", "2.11.8")
 
@@ -33,7 +33,7 @@ scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnin
 
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.2",
-  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "com.typesafe" % "config" % "1.3.1",
   "org.scalatest" %% "scalatest" % "3.0.0" % Test
 )
