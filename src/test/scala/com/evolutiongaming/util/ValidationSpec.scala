@@ -182,6 +182,13 @@ class ValidationSpec extends FunSuite with Matchers {
     List[Either[String, Int]]("1".ko).takeValid shouldEqual "1".ko
   }
 
+  test("fallbackTo") {
+    "1".ok.fallbackTo("2".ok) shouldEqual "1".ok
+    "1".ok.fallbackTo("2".ko) shouldEqual "1".ok
+    "1".ko.fallbackTo("2".ok) shouldEqual "2".ok
+    "1".ko.fallbackTo("2".ko) shouldEqual "1".ko
+  }
+
   implicit def eitherEquality[L, R]: Equality[Either[L, R]] = new Equality[Either[L, R]] {
     def areEqual(a: Either[L, R], b: Any) = a == b
   }

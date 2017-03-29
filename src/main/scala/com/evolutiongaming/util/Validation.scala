@@ -94,6 +94,10 @@ object Validation {
         case Left(e)                     => Left(e)
       }
     }
+
+    def fallbackTo[AA >: A, BB >: B](that: => Either[AA, BB]): Either[AA, BB] = {
+      orElse { left => that leftMap { _ => left } }
+    }
   }
 
   implicit class BoolToValidatedOps(val self: Boolean) extends AnyVal {
