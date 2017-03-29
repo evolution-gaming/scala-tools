@@ -15,13 +15,12 @@ object ConfigHelper {
       get[Option[T]](path)
     }
 
-    def getOrElse[T: FromConf](path: String, fallbackPath: String): T = {
+    def getOrElse[T: FromConf](path: String, fallbackPath: => String): T = {
       getOpt(path) getOrElse get(fallbackPath)
     }
 
     def getPrefixed[T: FromConf](path: String, prefix: String): T = {
-      val combined = s"$prefix.$path"
-      getOrElse(combined, path)
+      getOrElse(s"$prefix.$path", path)
     }
   }
 
@@ -65,7 +64,7 @@ object ConfigHelper {
 
     implicit def optionFromConf[T](implicit fromConf: FromConf[T]): FromConf[Option[T]] = new FromConf[Option[T]] {
       def apply(config: Config, path: String): Option[T] = {
-        if (config hasPath path) Some(config get[T] path) else None
+        if (config hasPath path) Some(config.get[T](path)) else None
       }
     }
 
