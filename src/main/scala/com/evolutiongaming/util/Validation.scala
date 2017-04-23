@@ -6,12 +6,9 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
-import scala.util.control.NonFatal
-import scala.util.{Either, Failure, Success, Try}
+import scala.util.{Either, Failure, Left, Right, Success, Try}
 
-/**
- * @author Sergey Tavanets
- */
+
 object Validation {
 
   type V[+T] = Either[String, T]
@@ -20,107 +17,149 @@ object Validation {
 
   type Error = Left[String, Nothing]
 
-  object FutureV {
-    def apply[T](future: Future[Either[String, T]])(implicit ec: ExecutionContext): FutureV[T] = {
-      FutureEither(future recover pf)
+  implicit class EitherOps[+L, +R](val self: Either[L, R]) extends AnyVal {
+
+    def map[RR](f: R => RR): Either[L, RR] = self match {
+      case Left(x)  => Left(x)
+      case Right(x) => Right(f(x))
     }
 
-    def right[T](future: Future[T])(implicit ec: ExecutionContext): FutureV[T] = {
-      FutureEither right future recover pf
+    def flatMap[LL >: L, RR](f: R => Either[LL, RR]): Either[LL, RR] = self match {
+      case Left(x)  => Left(x)
+      case Right(x) => f(x)
     }
 
-    private def pf[T]: PartialFunction[Throwable, Either[String, T]] = {
-      case NonFatal(e) => s"Exception: ${e.getMessage}".ko
+
+    def leftMap[LL](f: L => LL): Either[LL, R] = self match {
+      case Left(x)  => Left(f(x))
+      case Right(x) => Right(x)
+    }
+
+    def leftFlatMap[LL, RR >: R](f: L => Either[LL, RR]): Either[LL, RR] = self match {
+      case Left(x)  => f(x)
+      case Right(x) => Right(x)
+    }
+
+
+    def foldRight[RR >: R](f: L => RR): RR = self.fold(f, identity)
+
+    def foldLeft[LL >: L](f: R => LL): LL = self.fold(identity, f)
+
+
+    def orElse[LL, RR >: R](or: => Either[LL, RR]): Either[LL, RR] = leftFlatMap(_ => or)
+
+    def getOrElse[RR >: R](or: => RR): RR = foldRight(_ => or)
+
+    def |[RR >: R](or: => RR): RR = getOrElse(or)
+
+    def orError(toError: L => Throwable = x => new LeftException(x.toString)): R = {
+      this foldRight { l => throw toError(l) }
+    }
+
+
+    def onRight[U](f: R => U): Unit = self match {
+      case Left(_)  =>
+      case Right(x) => f(x)
+    }
+
+    def onLeft[U](f: L => U): Unit = self match {
+      case Left(x)  => f(x)
+      case Right(_) =>
+    }
+
+    def foreach[U](f: R => U): Unit = onRight(f)
+
+
+    def toRight: Option[R] = self match {
+      case Left(_)  => None
+      case Right(x) => Some(x)
+    }
+
+    def toLeft: Option[L] = self match {
+      case Left(x)  => Some(x)
+      case Right(_) => None
+    }
+
+    def toOption: Option[R] = toRight
+
+
+    def toList: List[R] = self match {
+      case Left(_)  => Nil
+      case Right(x) => x :: Nil
+    }
+
+    def toIterable: Iterable[R] = toList
+
+
+    def isOk: Boolean = self.isRight
+
+    def isKo: Boolean = self.isLeft
+
+    def exists(f: R => Boolean): Boolean = self match {
+      case Right(x) => f(x)
+      case Left(_)  => false
+    }
+
+    def contains[RR >: R](x: RR): Boolean = self match {
+      case Right(`x`) => true
+      case _          => false
+    }
+
+    def forall(f: R => Boolean): Boolean = self match {
+      case Right(b) => f(b)
+      case Left(_)  => true
+    }
+
+
+    def ?>>[LL](x: => LL): Either[LL, R] = leftMap { _ => x }
+
+    def fe[AA >: L]: FutureEither[AA, R] = FutureEither[AA, R](self)
+
+
+    def collect[RR >: R](pf: PartialFunction[R, RR]): Either[L, RR] = {
+      map { x => if (pf isDefinedAt x) pf(x) else x }
+    }
+
+    def collectWith[LL >: L, RR >: R](pf: PartialFunction[R, Either[LL, RR]]): Either[LL, RR] = {
+      flatMap { x => if (pf isDefinedAt x) pf(x) else Right(x) }
+    }
+
+
+    def recover[RR >: R](pf: PartialFunction[L, RR]): Either[L, RR] = {
+      leftFlatMap { x => if (pf isDefinedAt x) Right(pf(x)) else Left(x) }
+    }
+
+    def recoverWith[AA >: L, BB >: R](pf: PartialFunction[L, Either[AA, BB]]): Either[AA, BB] = {
+      leftFlatMap { x => if (pf isDefinedAt x) pf(x) else Left(x) }
+    }
+
+
+    def fallbackTo[LL >: L, BB >: R](that: => Either[LL, BB]): Either[LL, BB] = {
+      leftFlatMap { l => that leftMap { _ => l } }
     }
   }
 
-  implicit class RightBiasedEitherOps[+A, +B](val e: Either[A, B]) extends AnyVal {
-    def map[C](f: B => C): Either[A, C] = e.right.map(f)
-
-    def foreach[U](f: B => U): Unit = e.right.foreach(f)
-
-    def flatMap[AA >: A, Y](f: B => Either[AA, Y]): Either[AA, Y] = e.right.flatMap(f)
-
-    def toOption: Option[B] = e.right.toOption
-
-    def toList: List[B] = e.right.toSeq.toList
-
-    def toIterable: Iterable[B] = e.right.toSeq
-
-    def orElse[AA >: A, BB >: B](or: A => Either[AA, BB]): Either[AA, BB] = e.left.flatMap(or)
-
-    def getOrElse[BB >: B](or: A => BB): BB = e.fold[BB](or, identity)
-
-    def orFailure[BB >: B](or: => BB): BB = e.right.getOrElse(or)
-
-    def onFailure[U](f: A => U): Unit = e.left.foreach(f)
-
-    def toFailure: Option[A] = e.left.toOption
-
-    def |[BB >: B](or: => BB): BB = e.right.getOrElse(or)
-
-    def leftMap[AA](f: A => AA): Either[AA, B] = e.left.map(f)
-
-    def orError: B = this getOrElse { error => sys error error.toString }
-
-    def isOk: Boolean = e.isRight
-
-    def isKo: Boolean = e.isLeft
-
-    def exists(f: B => Boolean) = e.right exists f
-
-    def contains[BB >: B](x: BB): Boolean = exists(_ == x)
-
-    def collect[AA >: A, BB](error: B => AA, pf: PartialFunction[B, BB]): Either[AA, BB] = {
-      e.right.flatMap { x => if (pf isDefinedAt x) Right(pf(x)) else Left(error(x)) }
-    }
-
-    def ?>>[AA](x: => AA): Either[AA, B] = leftMap { _ => x }
-
-    def fe[AA >: A](implicit tag: ClassTag[AA]): FutureEither[AA, B] = FutureEither[AA, B](e)
-
-    def recover[BB >: B](pf: PartialFunction[A, BB]): Either[A, BB] = {
-      e match {
-        case Right(e)                    => Right(e)
-        case Left(e) if pf isDefinedAt e => Right(pf(e))
-        case Left(e)                     => Left(e)
-      }
-    }
-
-    def recoverWith[AA >: A, BB >: B](pf: PartialFunction[A, Either[AA, BB]]): Either[AA, BB] = {
-      e match {
-        case Right(e)                    => Right(e)
-        case Left(e) if pf isDefinedAt e => pf(e)
-        case Left(e)                     => Left(e)
-      }
-    }
-
-    def fallbackTo[AA >: A, BB >: B](that: => Either[AA, BB]): Either[AA, BB] = {
-      orElse { left => that leftMap { _ => left } }
-    }
-  }
-
-  implicit class BoolToValidatedOps(val self: Boolean) extends AnyVal {
+  implicit class BoolToEitherOps(val self: Boolean) extends AnyVal {
     def trueOr[T](left: => T): Either[T, Unit] = {
-      if (self) Right(()) else Left(left)
+      if (self) ().ok else left.ko
     }
 
     def falseOr[T](left: => T): Either[T, Unit] = {
-      if (self) Left(left) else Right(())
+      if (self) left.ko else ().ok
     }
   }
 
   /**
-   * Useful implicits when dealing with lots of legacy nullable Java code
-   * The codes becomes less Lisp-y and more Groovy/Ruby style,
-   * that I consider rather good thing than bad
-   */
+    * Useful implicits when dealing with lots of legacy nullable Java code
+    * The codes becomes less Lisp-y and more Groovy/Ruby style,
+    * that I consider rather good thing than bad
+    */
   implicit class NullableToValidatedOps[A](val self: A) extends AnyVal {
 
     /** Creates Some(x) if the caller is not null,
-      *  and None if it is null.
+      * and None if it is null.
       *
-      *  @return   Some(value) if value != null, None if value == null
+      * @return Some(value) if value != null, None if value == null
       */
     def ? : Option[A] = Option(self)
 
@@ -136,7 +175,7 @@ object Validation {
 
 
     def asInstanceV[B <: A](implicit tag: ClassTag[B]): V[B] = {
-      self.asInstanceOfOpt[B] ?>> s"type mismatch, expected: ${tag.runtimeClass.simpleName}, actual: ${self.getClass.simpleName}"
+      self.asInstanceOfOpt[B] ?>> s"type mismatch, expected: ${ tag.runtimeClass.simpleName }, actual: ${ self.getClass.simpleName }"
     }
   }
 
@@ -155,7 +194,7 @@ object Validation {
     /** Returns the option's value if the option is nonempty, otherwise
       * return the result of evaluating `default`.
       *
-      *  @param default  the default expression.
+      * @param default the default expression.
       */
     def |[B >: A](default: => B): B = o.getOrElse(default)
   }
@@ -197,9 +236,9 @@ object Validation {
     }
 
     def separate: (Iterable[L], Iterable[R]) = {
-      val valid = self.collect { case Right(x) => x }
-      val invalid = self.collect { case Left(x) => x }
-      (invalid, valid)
+      val ls = self collect { case Left(x) => x }
+      val rs = self collect { case Right(x) => x }
+      (ls, rs)
     }
   }
 
@@ -233,12 +272,6 @@ object Validation {
     }
   }
 
-  implicit class VOps[T](val self: V[T]) extends AnyVal {
-    def collect[TT >: T](pf: PartialFunction[T, TT]): V[TT] = {
-      RightBiasedEitherOps(self).collect(x => s"PartialFunction is not defined at $x", pf)
-    }
-  }
-
   implicit class FutureOfEitherOps[L, R](val self: Future[Either[L, R]]) extends AnyVal {
     def leftMap[LL](f: L => LL)(implicit ec: ExecutionContext): Future[Either[LL, R]] = {
       self.map(e => e.leftMap(f))
@@ -253,8 +286,8 @@ object Validation {
     def orElse[LL >: L, RR >: R](right: => Future[Either[LL, RR]])(implicit ec: ExecutionContext): Future[Either[LL, RR]] = {
       val p = Promise[Either[LL, RR]]()
       self.onComplete {
-        case Success(r@Right(_)) => p.success(r)
-        case _ => p.completeWith(right)
+        case Success(r @ Right(_)) => p.success(r)
+        case _                     => p.completeWith(right)
       }
       p.future
     }
@@ -270,8 +303,8 @@ object Validation {
     def orElse[RR >: R](right: => Future[Option[RR]])(implicit ec: ExecutionContext): Future[Option[RR]] = {
       val p = Promise[Option[RR]]()
       self.onComplete {
-        case Success(r@Some(_)) => p.success(r)
-        case _ => p.completeWith(right)
+        case Success(r @ Some(_)) => p.success(r)
+        case _                    => p.completeWith(right)
       }
       p.future
     }
