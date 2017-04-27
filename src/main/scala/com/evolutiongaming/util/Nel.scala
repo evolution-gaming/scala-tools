@@ -10,7 +10,7 @@ import scala.language.higherKinds
 /**
   * Non empty list
   */
-case class Nel[A](head: A, tail: List[A]) {
+case class Nel[+A](head: A, tail: List[A]) {
 
   def toList: List[A] = head :: tail
 
@@ -21,7 +21,7 @@ case class Nel[A](head: A, tail: List[A]) {
 
   def map[B](f: A => B): Nel[B] = Nel(f(head), tail.map(f))
 
-  def ++(xs: Nel[A]): Nel[A] = this ++ xs.toList
+  def ++[AA >: A](xs: Nel[AA]): Nel[AA] = this ++ xs.toList
 
   def ++[AA >: A](xs: GenTraversableOnce[AA]): Nel[AA] = {
     Nel(head, tail ++ xs)
@@ -31,7 +31,7 @@ case class Nel[A](head: A, tail: List[A]) {
 
   def ::[AA >: A](a: AA): Nel[AA] = Nel(a, head :: tail)
 
-  def :::(xs: List[A]): Nel[A] = xs match {
+  def :::[AA >: A](xs: List[AA]): Nel[AA] = xs match {
     case x :: xs => Nel(x, xs ::: head :: tail)
     case Nil     => this
   }
