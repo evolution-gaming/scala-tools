@@ -15,7 +15,12 @@ object Validation {
 
   type FutureV[T] = FutureEither[String, T]
 
+  type FE[L, R] = FutureEither[L, R]
+
+  type FV[R] = FutureEither[String, R]
+
   type Error = Left[String, Nothing]
+
 
   implicit class EitherOps[+L, +R](val self: Either[L, R]) extends AnyVal {
 
