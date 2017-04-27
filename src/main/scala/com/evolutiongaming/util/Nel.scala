@@ -105,6 +105,10 @@ case class Nel[+A](head: A, tail: List[A]) {
 
   def count(f: A => Boolean): Int = toList.count(f)
 
+  def collect[B](pf: PartialFunction[A, B]): List[B] = toList collect pf
+
+  def collectFirst[B](pf: PartialFunction[A, B]): Option[B] = toList collectFirst pf
+
   override def toString: String = s"$productPrefix($head, ${ tail mkString ", " })"
 }
 
