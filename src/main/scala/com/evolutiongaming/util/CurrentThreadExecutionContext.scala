@@ -1,13 +1,11 @@
 package com.evolutiongaming.util
 
-import java.util.concurrent.Executor
-
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContextExecutor
 
 /**
- * For tests only
- */
-object CurrentThreadExecutionContext extends ExecutionContext with Executor {
+  * For tests only
+  */
+object CurrentThreadExecutionContext extends ExecutionContextExecutor {
   def execute(runnable: Runnable) = runnable.run()
   def reportFailure(cause: Throwable) = throw cause
 }
