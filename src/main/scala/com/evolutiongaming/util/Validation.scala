@@ -21,6 +21,8 @@ object Validation {
 
   type Error = Left[String, Nothing]
 
+  type FO[T] = FutureOption[T]
+
 
   implicit class EitherOps[+L, +R](val self: Either[L, R]) extends AnyVal {
 
@@ -178,13 +180,14 @@ object Validation {
       */
     def ?>>[B](left: => B): Either[B, A] = this.?.toRight(left)
 
+    def fo: FutureOption[A] = FutureOption(Option(self))
 
     def asInstanceV[B <: A](implicit tag: ClassTag[B]): V[B] = {
       self.asInstanceOfOpt[B] ?>> s"type mismatch, expected: ${ tag.runtimeClass.simpleName }, actual: ${ self.getClass.simpleName }"
     }
   }
 
-  implicit class OptionOps[+A](val o: Option[A]) extends AnyVal {
+  implicit class OptionOps[+T](val self: Option[T]) extends AnyVal {
 
     /** Returns a [[scala.util.Left]] containing the given
       * argument `left` if this `o` is empty, or
@@ -194,14 +197,16 @@ object Validation {
       * @param left the expression to evaluate and return if this is empty
       * @see toLeft
       */
-    def ?>>[B](left: => B): Either[B, A] = o.toRight(left)
+    def ?>>[L](left: => L): Either[L, T] = self.toRight(left)
 
     /** Returns the option's value if the option is nonempty, otherwise
       * return the result of evaluating `default`.
       *
       * @param default the default expression.
       */
-    def |[B >: A](default: => B): B = o.getOrElse(default)
+    def |[TT >: T](default: => TT): TT = self.getOrElse(default)
+
+    def fo: FutureOption[T] = FutureOption(self)
   }
 
   implicit class TryOps[+A](val t: Try[A]) extends AnyVal {
@@ -298,15 +303,18 @@ object Validation {
     }
   }
 
-  implicit class FutureOfOptionOps[R](val self: Future[Option[R]]) extends AnyVal {
-    def fold[T](l: => T, r: R => T)(implicit ec: ExecutionContext): Future[T] = {
+  implicit class FutureOfOptionOps[T](val self: Future[Option[T]]) extends AnyVal {
+
+    def fold[TT](l: => TT, r: T => TT)(implicit ec: ExecutionContext): Future[TT] = {
       self map (e => e.fold(l)(r))
     }
 
-    def fe(implicit ec: ExecutionContext): FutureEither[Unit, R] = self.map(_.toRight(())).fe
+    def fe(implicit ec: ExecutionContext): FutureEither[Unit, T] = self.map(_.toRight(())).fe
 
-    def orElse[RR >: R](right: => Future[Option[RR]])(implicit ec: ExecutionContext): Future[Option[RR]] = {
-      val p = Promise[Option[RR]]()
+    def fo(implicit ec: ExecutionContext): FutureOption[T] = FutureOption(self)
+
+    def orElse[TT >: T](right: => Future[Option[TT]])(implicit ec: ExecutionContext): Future[Option[TT]] = {
+      val p = Promise[Option[TT]]()
       self.onComplete {
         case Success(r @ Some(_)) => p.success(r)
         case _                    => p.completeWith(right)
