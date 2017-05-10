@@ -291,7 +291,7 @@ object Validation {
       self map ((e: Either[L, R]) => e.fold(l, r))
     }
 
-    def fe(implicit ec: ExecutionContext, tag: ClassTag[L]): FutureEither[L, R] = FutureEither(self)
+    def fe: FutureEither[L, R] = FutureEither(self)
 
     def orElse[LL >: L, RR >: R](right: => Future[Either[LL, RR]])(implicit ec: ExecutionContext): Future[Either[LL, RR]] = {
       val p = Promise[Either[LL, RR]]()
@@ -311,7 +311,7 @@ object Validation {
 
     def fe(implicit ec: ExecutionContext): FutureEither[Unit, T] = self.map(_.toRight(())).fe
 
-    def fo(implicit ec: ExecutionContext): FutureOption[T] = FutureOption(self)
+    def fo: FutureOption[T] = FutureOption(self)
 
     def orElse[TT >: T](right: => Future[Option[TT]])(implicit ec: ExecutionContext): Future[Option[TT]] = {
       val p = Promise[Option[TT]]()

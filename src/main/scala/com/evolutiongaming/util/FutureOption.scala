@@ -96,7 +96,7 @@ sealed trait FutureOption[+T] {
       self filter p foreach f
     }
     
-    def withFilter(q: T => Boolean)(implicit ec: ExecutionContext): WithFilter = {
+    def withFilter(q: T => Boolean): WithFilter = {
       new WithFilter(x => p(x) && q(x))
     }
   }
