@@ -57,9 +57,9 @@ sealed trait FutureEither[+L, +R] {
   def foreach[U](f: R => U)(implicit ec: ExecutionContext): Unit = onRight(f)
 
 
-  def toRight(implicit ec: ExecutionContext): Future[Option[R]] = fold(_ => None, x => Some(x))
+  def toRight(implicit ec: ExecutionContext): FutureOption[R]
 
-  def toLeft(implicit ec: ExecutionContext): Future[Option[L]] = fold(x => Some(x), _ => None)
+  def toLeft(implicit ec: ExecutionContext): FutureOption[L]
 
 
   def exists(f: R => Boolean)(implicit ec: ExecutionContext): Future[Boolean] = fold(_ => false, f)
@@ -175,6 +175,15 @@ object FutureEither {
     }
 
 
+    def toRight(implicit ec: ExecutionContext): FutureOption[R] = {
+      FutureOption(value map { _.toRight })
+    }
+
+    def toLeft(implicit ec: ExecutionContext): FutureOption[L] = {
+      FutureOption(value map { _.toLeft })
+    }
+
+
     def await(timeout: Duration): Either[L, R] = Await.result(future, timeout)
 
 
@@ -237,6 +246,15 @@ object FutureEither {
 
     def onLeft[U](f: L => U)(implicit ec: ExecutionContext): Unit = {
       value onLeft f
+    }
+
+
+    def toRight(implicit ec: ExecutionContext): FutureOption[R] = {
+      FutureOption(value.toRight)
+    }
+
+    def toLeft(implicit ec: ExecutionContext): FutureOption[L] = {
+      FutureOption(value.toLeft)
     }
 
 

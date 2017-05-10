@@ -415,6 +415,10 @@ class FutureEitherSpec extends FunSuite with Matchers {
     def block: Either[L, R] = self.future.block
   }
 
+  implicit class FutureOptionTest[T](self: FutureOption[T]) {
+    def block: Option[T] = self.future.block
+  }
+
   implicit def eitherEquality[L, R]: Equality[Either[L, R]] = new Equality[Either[L, R]] {
     def areEqual(a: Either[L, R], b: Any) = a == b
   }
