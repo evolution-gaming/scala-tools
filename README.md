@@ -15,3 +15,11 @@
 
   config stringOpt "path" // Option[String]
 ```
+
+## Setup
+
+```scala
+resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
+
+libraryDependencies += "com.evolutiongaming" %% "scala-tools" % "1.6"
+```

@@ -326,4 +326,8 @@ object Validation {
   implicit class NestedEitherOps[+A, +B](val e: Either[A, Either[A, B]]) extends AnyVal {
     def flatten: Either[A, B] = e.flatMap(identity)
   }
+
+  implicit class FutureOfAnyOps[T](val self: Future[T]) extends AnyVal {
+    def fo(implicit ec: ExecutionContext): FutureOption[T] = FutureOption(self map Option.apply)
+  }
 }
