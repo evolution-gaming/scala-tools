@@ -1,18 +1,59 @@
 package com.evolutiongaming.util
 
 import com.evolutiongaming.util.ConfigHelper._
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.{FunSuite, Matchers}
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 class ConfigHelperSpec extends FunSuite with Matchers {
+
   test("get") {
     val config = ConfigFactory.parseString("key:value")
     config.get[String]("key") shouldEqual "value"
     intercept[Exception] {
       config.get[Int]("key")
     }
+  }
+
+  test("get boolean") {
+    val config = ConfigFactory.parseString("key:true")
+    config.get[Boolean]("key") shouldEqual true
+  }
+
+  test("get config") {
+    val config = ConfigFactory.parseString("key:{key: value}")
+    config.get[Config]("key").getString("key") shouldEqual "value"
+  }
+
+  test("get duration") {
+    val config = ConfigFactory.parseString("key:1m")
+    config.get[FiniteDuration]("key") shouldEqual 1.minute
+  }
+
+  test("get int list") {
+    val config = ConfigFactory.parseString("key:[1,2]")
+    config.get[List[Int]]("key") shouldEqual List(1, 2)
+  }
+
+  test("get duration list") {
+    val config = ConfigFactory.parseString("key:[1s,2s]")
+    config.get[List[FiniteDuration]]("key") shouldEqual List(1.second, 2.second)
+  }
+
+  test("get double list") {
+    val config = ConfigFactory.parseString("key:[1.1,2.2]")
+    config.get[List[Double]]("key") shouldEqual List(1.1, 2.2)
+  }
+
+  test("get string list") {
+    val config = ConfigFactory.parseString("key:[a,b]")
+    config.get[List[String]]("key") shouldEqual List("a", "b")
+  }
+
+  test("get boolean list") {
+    val config = ConfigFactory.parseString("key:[true,false]")
+    config.get[List[Boolean]]("key") shouldEqual List(true, false)
   }
 
   test("getOpt") {

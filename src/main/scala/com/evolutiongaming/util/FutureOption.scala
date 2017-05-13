@@ -3,6 +3,7 @@ package com.evolutiongaming.util
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 sealed trait FutureOption[+T] {
 
@@ -63,18 +64,16 @@ sealed trait FutureOption[+T] {
   def ?>>[L](l: => L)(implicit ec: ExecutionContext): FutureEither[L, T] = toRight(l)
 
 
-  def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-    map { x => if (pf isDefinedAt x) pf(x) else x }
-  }
+  def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT]
 
   def collectWith[TT >: T](pf: PartialFunction[T, FutureOption[TT]])
     (implicit ec: ExecutionContext): FutureOption[TT] = {
 
-    flatMap { x => if (pf isDefinedAt x) pf(x) else FutureOption(x) }
+    flatMap { x => if (pf isDefinedAt x) pf(x) else FutureOption.empty }
   }
 
   
-  def recover[TT >: T](pf: PartialFunction[Throwable, Option[TT]])
+  def recover[TT >: T](pf: PartialFunction[Throwable, TT])
     (implicit ec: ExecutionContext): FutureOption[TT]
 
   def recoverWith[TT >: T](pf: PartialFunction[Throwable, FutureOption[TT]])
@@ -163,10 +162,14 @@ object FutureOption {
       FutureEither(value map {_.toLeft(r)})
     }
 
-    def recover[TT >: T](pf: PartialFunction[Throwable, Option[TT]])
+    def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
+      HasFuture(value map { _ collect pf })
+    }
+
+    def recover[TT >: T](pf: PartialFunction[Throwable, TT])
       (implicit ec: ExecutionContext): FutureOption[TT] = {
 
-      HasFuture(future recover { case x if pf isDefinedAt x => pf(x) })
+      HasFuture(future recover { case x if pf isDefinedAt x => Some(pf(x)) })
     }
 
     def recoverWith[TT >: T](pf: PartialFunction[Throwable, FutureOption[TT]])
@@ -176,8 +179,9 @@ object FutureOption {
     }
 
     override def toString = value.value match {
-      case Some(value) => s"FutureOption($value)"
-      case None        => "FutureOption(<not completed>)"
+      case Some(Success(value)) => s"FutureOption($value)"
+      case Some(Failure(value)) => s"FutureOption($value)"
+      case None                 => "FutureOption(<not completed>)"
     }
   }
 
@@ -226,7 +230,11 @@ object FutureOption {
       FutureEither(value.toLeft(r))
     }
 
-    def recover[TT >: T](pf: PartialFunction[Throwable, Option[TT]])
+    def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
+      HasOption(value collect pf)
+    }
+
+    def recover[TT >: T](pf: PartialFunction[Throwable, TT])
       (implicit ec: ExecutionContext): FutureOption[TT] = this
 
     def recoverWith[TT >: T](pf: PartialFunction[Throwable, FutureOption[TT]])

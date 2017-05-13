@@ -1,27 +1,31 @@
 package com.evolutiongaming.util
 
-import org.scalactic.Equality
-import org.scalatest.{FunSuite, Matchers}
 import com.evolutiongaming.util.Validation._
+import org.scalactic.Equality
+import org.scalatest.{Assertions, FunSuite, Matchers}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.control.NoStackTrace
 
 class FutureOptionSpec extends FunSuite with Matchers {
 
   implicit def ec: ExecutionContext = CurrentThreadExecutionContext
 
-  val so = FutureOption("")
-  val no = FutureOption(None)
-  val sfo = FutureOption(Future.successful(Some("")))
-  val nfo = FutureOption(Future.successful(None))
+  val so: FutureOption[String] = FutureOption("")
+  val no: FutureOption[String] = FutureOption(None)
+  val sfo: FutureOption[String] = FutureOption(Future.successful(Some("")))
+  val nfo: FutureOption[String] = FutureOption(Future.successful(None))
+  val failed: FutureOption[String] = FutureOption(Future.failed(new TestException))
 
   test("map") {
     so.map { _ => 1 }.block shouldEqual Some(1)
     no.map { _ => 1 }.block shouldEqual None
     sfo.map { _ => 1 }.block shouldEqual Some(1)
     nfo.map { _ => 1 }.block shouldEqual None
+
+    interceptFo[TestException](so.map(_ => exception))
+    interceptFo[TestException](sfo.map(_ => exception))
   }
 
   test("flatMap") {
@@ -109,28 +113,35 @@ class FutureOptionSpec extends FunSuite with Matchers {
   }
 
   test("filter") {
-    so.filter( _ == "").block shouldEqual Some("")
-    so.filter( _ == " ").block shouldEqual None
-    no.filter( _ == "").block shouldEqual None
-    sfo.filter( _ == "").block shouldEqual Some("")
-    sfo.filter( _ == " ").block shouldEqual None
-    nfo.filter( _ == "").block shouldEqual None
+    so.filter(_ == "").block shouldEqual Some("")
+    so.filter(_ == " ").block shouldEqual None
+    no.filter(_ == "").block shouldEqual None
+    sfo.filter(_ == "").block shouldEqual Some("")
+    sfo.filter(_ == " ").block shouldEqual None
+    nfo.filter(_ == "").block shouldEqual None
   }
 
   test("filterNot") {
-    so.filterNot( _ == "").block shouldEqual None
-    so.filterNot( _ == " ").block shouldEqual Some("")
-    no.filterNot( _ == "").block shouldEqual None
-    sfo.filterNot( _ == "").block shouldEqual None
-    sfo.filterNot( _ == " ").block shouldEqual Some("")
-    nfo.filterNot( _ == "").block shouldEqual None
+    so.filterNot(_ == "").block shouldEqual None
+    so.filterNot(_ == " ").block shouldEqual Some("")
+    no.filterNot(_ == "").block shouldEqual None
+    sfo.filterNot(_ == "").block shouldEqual None
+    sfo.filterNot(_ == " ").block shouldEqual Some("")
+    nfo.filterNot(_ == "").block shouldEqual None
   }
 
   test("withFilter") {
-    (for {x <- so if x == ""} yield x).block shouldEqual Some("")
-    (for {x <- no if x == ""} yield x).block shouldEqual None
-    (for {x <- sfo if x == ""} yield x).block shouldEqual Some("")
-    (for {x <- nfo if x == ""} yield x).block shouldEqual None
+    (for {x <- so if x == ""; if x == ""} yield x).block shouldEqual Some("")
+    (for {x <- no if x == ""; if x == ""} yield x).block shouldEqual None
+    (for {x <- sfo if x == ""; if x == ""} yield x).block shouldEqual Some("")
+    (for {x <- nfo if x == ""; if x == ""} yield x).block shouldEqual None
+
+    (for {
+      x <- so if x == ""
+      x <- sfo if x == ""
+      x <- no if x == ""
+      x <- nfo if x == ""
+    } yield x).block shouldEqual None
   }
 
   test("isEmpty") {
@@ -175,7 +186,106 @@ class FutureOptionSpec extends FunSuite with Matchers {
     None.fo.block shouldEqual None
   }
 
+  test("collect") {
+    so.collect { case "" => 1 }.block shouldEqual Some(1)
+    so.collect { case " " => 1 }.block shouldEqual None
+    sfo.collect { case "" => 1 }.block shouldEqual Some(1)
+    sfo.collect { case " " => 1 }.block shouldEqual None
+    no.collect { case "" => 1 }.block shouldEqual None
+    nfo.collect { case "" => 1 }.block shouldEqual None
+  }
+
+  test("collectWith") {
+    so.collectWith { case "" => so }.block shouldEqual Some("")
+    so.collectWith { case "" => nfo }.block shouldEqual None
+    so.collectWith { case " " => no }.block shouldEqual None
+    so.collectWith { case " " => sfo }.block shouldEqual None
+    so.collectWith { case "" => sfo }.block shouldEqual Some("")
+
+    sfo.collectWith { case "" => so }.block shouldEqual Some("")
+    sfo.collectWith { case "" => nfo }.block shouldEqual None
+    sfo.collectWith { case " " => no }.block shouldEqual None
+    sfo.collectWith { case " " => sfo }.block shouldEqual None
+    sfo.collectWith { case "" => sfo }.block shouldEqual Some("")
+
+    no.collect { case "" => 1 }.block shouldEqual None
+    no.collect { case " " => 1 }.block shouldEqual None
+    nfo.collect { case "" => 1 }.block shouldEqual None
+    nfo.collect { case "" => 1 }.block shouldEqual None
+  }
+
+  test("orError") {
+    so.orError().block shouldEqual ""
+    sfo.orError().block shouldEqual ""
+    interceptF(no.orError(new TestException))
+    interceptF(nfo.orError(new TestException))
+  }
+
+  test("empty") {
+    FutureOption.empty.block shouldEqual None
+  }
+
+  test("recover") {
+    (so recover { case _: TestException => " " }).block shouldEqual Some("")
+    (sfo recover { case _: TestException => " " }).block shouldEqual Some("")
+    (no recover { case _: TestException => " " }).block shouldEqual None
+    (nfo recover { case _: TestException => " " }).block shouldEqual None
+    (failed recover { case _: TestException => " " }).block shouldEqual Some(" ")
+  }
+
+  test("recoverWith") {
+    (so recoverWith { case _: TestException => " ".fo }).block shouldEqual Some("")
+    (sfo recoverWith { case _: TestException => " ".fo }).block shouldEqual Some("")
+    (no recoverWith { case _: TestException => " ".fo }).block shouldEqual None
+    (nfo recoverWith { case _: TestException => " ".fo }).block shouldEqual None
+    (failed recoverWith { case _: TestException => " ".fo }).block shouldEqual Some(" ")
+
+    (so recoverWith { case _: TestException => FutureOption.empty }).block shouldEqual Some("")
+    (sfo recoverWith { case _: TestException => FutureOption.empty }).block shouldEqual Some("")
+    (no recoverWith { case _: TestException => FutureOption.empty }).block shouldEqual None
+    (nfo recoverWith { case _: TestException => FutureOption.empty }).block shouldEqual None
+    (failed recoverWith { case _: TestException => FutureOption.empty }).block shouldEqual None
+  }
+
+  test("toString") {
+    so.toString shouldEqual "FutureOption(Some())"
+    sfo.toString shouldEqual "FutureOption(Some())"
+    no.toString shouldEqual "FutureOption(None)"
+    nfo.toString shouldEqual "FutureOption(None)"
+    failed.toString shouldEqual "FutureOption(com.evolutiongaming.util.FutureOptionSpec$TestException: test)"
+    val promise = Promise[Option[String]]
+    FutureOption(promise.future).toString shouldEqual "FutureOption(<not completed>)"
+  }
+
+  test("foreach") {
+    var x = ""
+
+    so foreach { _ => x = "so" }
+    x shouldEqual "so"
+
+    sfo foreach { _ => x = "sfo" }
+    x shouldEqual "sfo"
+
+    no foreach { _ => x = "no" }
+    x shouldEqual "sfo"
+
+    nfo foreach { _ => x = "nfo" }
+    x shouldEqual "sfo"
+  }
+
   private val timeout = 10.seconds
+
+  def exception = throw new TestException
+
+  def interceptFo[T](f: => FutureOption[T]): Unit = {
+    val x = f
+    Assertions.intercept[TestException] { x.block }
+  }
+
+  def interceptF[T](f: => Future[T]): Unit = {
+    val x = f
+    Assertions.intercept[TestException] { x.block }
+  }
 
   class TestException extends RuntimeException("test") with NoStackTrace
 

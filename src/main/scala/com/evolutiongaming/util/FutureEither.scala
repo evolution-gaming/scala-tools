@@ -5,8 +5,8 @@ import com.evolutiongaming.util.Validation._
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Either
 import scala.util.control.NonFatal
+import scala.util.{Either, Failure, Success}
 
 
 sealed trait FutureEither[+L, +R] {
@@ -201,8 +201,9 @@ object FutureEither {
 
 
     override def toString = value.value match {
-      case Some(value) => s"FutureEither($value)"
-      case None        => "FutureEither(<not completed>)"
+      case Some(Success(value)) => s"FutureEither($value)"
+      case Some(Failure(value)) => s"FutureEither($value)"
+      case None                 => "FutureEither(<not completed>)"
     }
   }
 

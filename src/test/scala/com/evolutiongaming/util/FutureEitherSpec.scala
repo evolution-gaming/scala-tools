@@ -5,7 +5,7 @@ import org.scalactic.Equality
 import org.scalatest.{Assertions, FunSuite, Matchers}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.control.NoStackTrace
 
 class FutureEitherSpec extends FunSuite with Matchers {
@@ -255,6 +255,22 @@ class FutureEitherSpec extends FunSuite with Matchers {
     x shouldEqual "lfe"
   }
 
+  test("foreach") {
+    var x = ""
+
+    re foreach { _ => x = "re" }
+    x shouldEqual "re"
+
+    rfe foreach { _ => x = "rfe" }
+    x shouldEqual "rfe"
+
+    le foreach { _ => x = "le" }
+    x shouldEqual "rfe"
+
+    lfe foreach { _ => x = "lfe" }
+    x shouldEqual "rfe"
+  }
+
   test("toRight") {
     re.toRight.block shouldEqual Some("r")
     rfe.toRight.block shouldEqual Some("r")
@@ -388,6 +404,16 @@ class FutureEitherSpec extends FunSuite with Matchers {
       (Future successful 1.ko).fe,
       (Future successful 2.ok).fe,
       3.ok.fe)).block shouldEqual 1.ko
+  }
+
+  test("toString") {
+    le.toString shouldEqual "FutureEither(Left(l))"
+    re.toString shouldEqual "FutureEither(Right(r))"
+    lfe.toString shouldEqual "FutureEither(Left(l))"
+    rfe.toString shouldEqual "FutureEither(Right(r))"
+    FutureEither(Future.failed(new TestException)).toString shouldEqual "FutureEither(com.evolutiongaming.util.FutureEitherSpec$TestException: test)"
+    val promise = Promise[Either[String, String]]
+    promise.future.fe.toString shouldEqual "FutureEither(<not completed>)"
   }
 
 

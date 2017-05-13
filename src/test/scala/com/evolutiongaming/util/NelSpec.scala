@@ -82,11 +82,44 @@ class NelSpec extends FunSuite with Matchers {
     (1 :: 2 :: Nel).mkString("[", ",", "]") shouldEqual "[1,2]"
   }
 
+  test("exists") {
+    (1 :: Nel) exists { _ == 1 } shouldEqual true
+  }
+
+  test("forall") {
+    (1 :: Nel) forall { _ == 1 } shouldEqual true
+    (1 :: 2 :: Nel) forall { _ == 1 } shouldEqual false
+  }
+
+  test("find") {
+    (1 :: Nel) find { _ == 1 } shouldEqual Some(1)
+    (1 :: Nel) find { _ == 2 } shouldEqual None
+  }
+
+  test("count") {
+    (1 :: Nel).count(_ == 1) shouldEqual 1
+    (1 :: Nel).count(_ == 2) shouldEqual 0
+  }
+
   test("unsafe") {
     Nel.unsafe(1 :: Nil) shouldEqual (1 :: Nel)
 
     intercept[Exception] {
       Nel.unsafe(Nil)
     }
+  }
+
+  test("opt") {
+    Nel.opt(Nil) shouldEqual None
+    Nel.opt(1 :: Nil) shouldEqual Some(1 :: Nel)
+  }
+
+  test("collect") {
+    (1 :: 2 :: 1 :: Nel) collect { case 1 => "" } shouldEqual ("" :: "" :: Nil)
+  }
+
+  test("collectFirst") {
+    (1 :: 2 :: 1 :: Nel) collectFirst { case 1 => "" } shouldEqual Some("")
+    (1 :: Nel) collectFirst { case 2 => "" } shouldEqual None
   }
 }
