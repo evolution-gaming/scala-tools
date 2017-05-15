@@ -184,6 +184,10 @@ class FutureOptionSpec extends FunSuite with Matchers {
     "".fo.block shouldEqual Some("")
     Some("").fo.block shouldEqual Some("")
     None.fo.block shouldEqual None
+    Future.successful("").fo.block shouldEqual Some("")
+    Future.successful(null: String).fo.block shouldEqual None
+    Future.successful(Some("")).fo.block shouldEqual Some("")
+    Future.successful(None).fo.block shouldEqual None
   }
 
   test("collect") {

@@ -59,11 +59,21 @@ case class Nel[+A](head: A, tail: List[A]) {
 
   def forall(p: A => Boolean): Boolean = p(head) && tail.forall(p)
 
-  def foldLeft[B](b: B)(f: (B, A) => B): B =
-    tail.foldLeft(f(b, head))(f)
+  def foldLeft[B](z: B)(f: (B, A) => B): B = {
+    tail.foldLeft(f(z, head))(f)
+  }
 
-  def reduceLeft[AA >: A](f: (AA, AA) => AA): AA =
-    tail.foldLeft[AA](head)(f)
+  def foldRight[B](z: B)(f: (A, B) => B): B = {
+    toList.foldRight(z)(f)
+  }
+
+  def reduceLeft[B >: A](f: (B, A) => B): B = {
+    tail.foldLeft[B](head)(f)
+  }
+
+  def reduceRight[B >: A](f: (A, B) => B): B = {
+    toList.reduceRight(f)
+  }
 
   def reverse: Nel[A] = {
     @tailrec
@@ -108,6 +118,8 @@ case class Nel[+A](head: A, tail: List[A]) {
   def collect[B](pf: PartialFunction[A, B]): List[B] = toList collect pf
 
   def collectFirst[B](pf: PartialFunction[A, B]): Option[B] = toList collectFirst pf
+
+  def last: A = tail.lastOption getOrElse head
 
   override def toString: String = s"$productPrefix($head, ${ tail mkString ", " })"
 }

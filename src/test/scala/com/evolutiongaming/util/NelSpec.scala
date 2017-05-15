@@ -65,11 +65,14 @@ class NelSpec extends FunSuite with Matchers {
   }
 
   test("filter") {
+    (1 :: 2 :: Nel) filter { _ >= 1 } shouldEqual (1 :: 2 :: Nil)
+    (1 :: 2 :: Nel) filter { _ > 1 } shouldEqual (2 :: Nil)
     (1 :: 2 :: Nel) filter { _ > 1 } shouldEqual (2 :: Nil)
     (1 :: 2 :: Nel) filter { _ > 2 } shouldEqual Nil
   }
 
   test("filterNot") {
+    (1 :: 2 :: Nel) filterNot { _ == 3 } shouldEqual (1 :: 2 :: Nil)
     (1 :: 2 :: Nel) filterNot { _ <= 1 } shouldEqual (2 :: Nil)
     (1 :: 2 :: Nel) filterNot { _ <= 2 } shouldEqual Nil
   }
@@ -121,5 +124,30 @@ class NelSpec extends FunSuite with Matchers {
   test("collectFirst") {
     (1 :: 2 :: 1 :: Nel) collectFirst { case 1 => "" } shouldEqual Some("")
     (1 :: Nel) collectFirst { case 2 => "" } shouldEqual None
+  }
+
+  test("last") {
+    (1 :: Nel).last shouldEqual 1
+    (1 :: 2 :: Nel).last shouldEqual 2
+  }
+
+  test("concat") {
+    (1 :: Nel) concat (2 :: Nel) shouldEqual (1 :: 2 :: Nel)
+  }
+
+  test("foldLeft") {
+    (1 :: 2 :: 3 :: Nel).foldLeft("") { (s, x) => s + x } shouldEqual "123"
+  }
+
+  test("foldRight") {
+    (1 :: 2 :: 3 :: Nel).foldRight("") { (x, s) => s + x} shouldEqual "321"
+  }
+
+  test("reduceLeft") {
+    (1 :: 2 :: 3 :: Nel).reduceLeft[Any] { (s, x) => s.toString + x.toString} shouldEqual "123"
+  }
+
+  test("reduceRight") {
+    (1 :: 2 :: 3 :: Nel).reduceRight[Any] { (x, s) => s.toString + x.toString} shouldEqual "321"
   }
 }
