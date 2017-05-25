@@ -416,6 +416,9 @@ class FutureEitherSpec extends FunSuite with Matchers {
     promise.future.fe.toString shouldEqual "FutureEither(<not completed>)"
   }
 
+  test("fe") {
+    (Future successful "x").fe[String].block shouldEqual Right("x")
+  }
 
   private val timeout = 10.seconds
 

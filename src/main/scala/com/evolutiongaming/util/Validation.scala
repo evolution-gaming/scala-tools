@@ -329,5 +329,7 @@ object Validation {
 
   implicit class FutureOfAnyOps[T](val self: Future[T]) extends AnyVal {
     def fo(implicit ec: ExecutionContext): FutureOption[T] = FutureOption(self map Option.apply)
+
+    def fe[L](implicit ec: ExecutionContext): FutureEither[L, T] = FutureEither(self map Right.apply)
   }
 }
