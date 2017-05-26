@@ -277,6 +277,16 @@ class FutureOptionSpec extends FunSuite with Matchers {
     x shouldEqual "sfo"
   }
 
+  test("sequence") {
+    val list = List("".fo, no, sfo, nfo)
+    FutureOption.sequence(list).block shouldEqual List("", "")
+  }
+
+  test("traverse") {
+    val list = List("".fo, no, sfo, nfo)
+    FutureOption.traverse(list)(identity).block shouldEqual List("", "")
+  }
+
   private val timeout = 10.seconds
 
   def exception = throw new TestException
