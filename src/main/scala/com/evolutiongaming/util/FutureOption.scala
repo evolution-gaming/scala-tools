@@ -116,12 +116,7 @@ object FutureOption {
   def sequence[A, M[X] <: TraversableOnce[X]](in: M[FutureOption[A]])
     (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[FutureOption[A]], A, M[A]]): Future[M[A]] = {
 
-    in.foldLeft(Future successful cbf(in)) { (builder, x) =>
-      for {
-        builder <- builder
-        x <- x.future
-      } yield builder ++= x
-    } map { _.result() }
+    traverse(in)(identity)
   }
 
   def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(f: A => FutureOption[B])
