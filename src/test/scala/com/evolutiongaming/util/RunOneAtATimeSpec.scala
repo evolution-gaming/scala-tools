@@ -1,5 +1,6 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global

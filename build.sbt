@@ -35,6 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.2",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "com.typesafe" % "config" % "1.3.1",
+  "com.evolutiongaming" %% "executor-tools" % "1.0.0",
   "org.scalatest" %% "scalatest" % "3.0.3" % Test
 )
 

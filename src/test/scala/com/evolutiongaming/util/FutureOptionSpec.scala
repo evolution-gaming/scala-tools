@@ -1,11 +1,13 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
 import org.scalatest.{Assertions, FunSuite, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.util.Success
 import scala.util.control.NoStackTrace
 
 class FutureOptionSpec extends FunSuite with Matchers {
@@ -285,6 +287,34 @@ class FutureOptionSpec extends FunSuite with Matchers {
   test("traverse") {
     val list = List("".fo, no, sfo, nfo)
     FutureOption.traverse(list)(identity).block shouldEqual List("", "")
+  }
+
+  test("transform") {
+    so.transform(x => Some(x.isDefined)).block shouldEqual Some(true)
+    sfo.transform(x => Some(x.isDefined)).block shouldEqual Some(true)
+    no.transform(x => Some(x.isDefined)).block shouldEqual Some(false)
+    nfo.transform(x => Some(x.isDefined)).block shouldEqual Some(false)
+  }
+
+  test("transformWith") {
+    so.transformWith(_.isDefined.fo).block shouldEqual Some(true)
+    sfo.transformWith(_.isDefined.fo).block shouldEqual Some(true)
+    no.transformWith(_.isDefined.fo).block shouldEqual Some(false)
+    nfo.transformWith(_.isDefined.fo).block shouldEqual Some(false)
+  }
+
+  test("andThen") {
+    var x = 0
+    so andThen { case Some(_) => x += 1 }
+    sfo andThen { case Some(_) => x += 1 }
+    no andThen { case None => x += 1 }
+    nfo andThen { case None => x += 1 }
+    x shouldEqual 4
+  }
+
+  test("value") {
+    so.value shouldEqual Some(Success(Some("")))
+    no.value shouldEqual Some(Success(None))
   }
 
   private val timeout = 10.seconds

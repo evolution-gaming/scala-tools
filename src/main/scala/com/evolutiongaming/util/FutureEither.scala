@@ -1,17 +1,20 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
-import scala.util.{Either, Failure, Success}
+import scala.util.{Either, Failure, Success, Try}
 
 
 sealed trait FutureEither[+L, +R] {
 
   def future: Future[Either[L, R]]
+
+  def value: Option[Try[Either[L, R]]]
 
 
   def map[RR](f: R => RR)(implicit ec: ExecutionContext): FutureEither[L, RR]
@@ -23,6 +26,18 @@ sealed trait FutureEither[+L, +R] {
 
   def leftFlatMap[LL, RR >: R](f: L => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR]
 
+
+  def transform[LL, RR](f: Either[L, R] => Either[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR]
+
+  def transformWith[LL, RR](f: Either[L, R] => FutureEither[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR]
+
+  def andThen[U](pf: PartialFunction[Either[L, R], U])(implicit ec: ExecutionContext): FutureEither[L, R] = {
+    transform { x =>
+      try if (pf.isDefinedAt(x)) pf(x)
+      catch { case NonFatal(t) => ec reportFailure t }
+      x
+    }
+  }
 
   def fold[T](l: L => T, r: R => T)(implicit ec: ExecutionContext): Future[T]
 
@@ -57,9 +72,9 @@ sealed trait FutureEither[+L, +R] {
   def foreach[U](f: R => U)(implicit ec: ExecutionContext): Unit = onRight(f)
 
 
-  def toRight(implicit ec: ExecutionContext): FutureOption[R]
+  def toRight: FutureOption[R]
 
-  def toLeft(implicit ec: ExecutionContext): FutureOption[L]
+  def toLeft: FutureOption[L]
 
 
   def exists(f: R => Boolean)(implicit ec: ExecutionContext): Future[Boolean] = fold(_ => false, f)
@@ -120,23 +135,25 @@ object FutureEither {
       case Right(x) :: xs => loop(xs, x :: result)
     }
 
-    if (fs.isEmpty) FutureEither(loop(es.reverse map { _.value }))
+    if (fs.isEmpty) FutureEither(loop(es.reverse map { _.self }))
     else FutureEither(for {xs <- Future.sequence(xs map { _.future })} yield loop(xs))
   }
 
 
-  private case class HasFuture[+L, +R](value: Future[Either[L, R]]) extends FutureEither[L, R] {
+  private case class HasFuture[+L, +R](self: Future[Either[L, R]]) extends FutureEither[L, R] {
 
-    def future: Future[Either[L, R]] = value
+    def future: Future[Either[L, R]] = self
+
+    def value: Option[Try[Either[L, R]]] = self.value
 
 
     def map[RR](f: R => RR)(implicit ec: ExecutionContext): FutureEither[L, RR] = {
-      HasFuture(value map { _ map f })
+      HasFuture(self map { _ map f })
     }
 
     def flatMap[LL >: L, RR](f: R => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR] = {
       HasFuture(for {
-        x <- value
+        x <- self
         x <- x match {
           case Left(x)  => Future successful x.ko
           case Right(x) => f(x).future
@@ -146,13 +163,12 @@ object FutureEither {
 
 
     def leftMap[LL](f: L => LL)(implicit ec: ExecutionContext): FutureEither[LL, R] = {
-      HasFuture(value map { _ leftMap f })
+      HasFuture(self map { _ leftMap f })
     }
-
 
     def leftFlatMap[LL, RR >: R](f: (L) => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR] = {
       HasFuture(for {
-        x <- value
+        x <- self
         x <- x match {
           case Left(x)  => f(x).future
           case Right(x) => Future successful x.ok
@@ -161,26 +177,38 @@ object FutureEither {
     }
 
 
+    def transform[LL, RR](f: Either[L, R] => Either[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR] = {
+      HasFuture(self.map(f))
+    }
+
+    def transformWith[LL, RR](f: Either[L, R] => FutureEither[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR] = {
+      HasFuture(for {
+        x <- self
+        x <- f(x).future
+      } yield x)
+    }
+
+
     def fold[T](l: L => T, r: R => T)(implicit ec: ExecutionContext): Future[T] = {
-      value map { _.fold(l, r) }
+      self map { _.fold(l, r) }
     }
 
 
     def onRight[U](f: R => U)(implicit ec: ExecutionContext): Unit = {
-      value foreach { _ onRight f }
+      self foreach { _ onRight f }
     }
 
     def onLeft[U](f: L => U)(implicit ec: ExecutionContext): Unit = {
-      value foreach { _ onLeft f }
+      self foreach { _ onLeft f }
     }
 
 
-    def toRight(implicit ec: ExecutionContext): FutureOption[R] = {
-      FutureOption(value map { _.toRight })
+    def toRight: FutureOption[R] = {
+      FutureOption(self.map { _.toRight }(CurrentThreadExecutionContext))
     }
 
-    def toLeft(implicit ec: ExecutionContext): FutureOption[L] = {
-      FutureOption(value map { _.toLeft })
+    def toLeft: FutureOption[L] = {
+      FutureOption(self.map { _.toLeft }(CurrentThreadExecutionContext))
     }
 
 
@@ -200,7 +228,7 @@ object FutureEither {
     }
 
 
-    override def toString = value.value match {
+    override def toString = self.value match {
       case Some(Success(value)) => s"FutureEither($value)"
       case Some(Failure(value)) => s"FutureEither($value)"
       case None                 => "FutureEither(<not completed>)"
@@ -208,16 +236,19 @@ object FutureEither {
   }
 
 
-  private case class HasEither[+L, +R](value: Either[L, R]) extends FutureEither[L, R] {
+  private case class HasEither[+L, +R](self: Either[L, R]) extends FutureEither[L, R] {
 
-    def future: Future[Either[L, R]] = Future successful value
+    def future: Future[Either[L, R]] = Future successful self
+
+    def value: Option[Try[Either[L, R]]] = Some(Success(self))
+
 
     def map[RR](f: R => RR)(implicit ec: ExecutionContext) = {
-      safe(HasEither(value map f))
+      safe(HasEither(self map f))
     }
 
     def flatMap[LL >: L, RR](f: R => FutureEither[LL, RR])(implicit ec: ExecutionContext) = {
-      value match {
+      self match {
         case Left(x)  => HasEither(x.ko)
         case Right(x) => safe(f(x))
       }
@@ -225,41 +256,50 @@ object FutureEither {
 
 
     def leftMap[LL](f: L => LL)(implicit ec: ExecutionContext): FutureEither[LL, R] = {
-      safe(HasEither(value leftMap f))
+      safe(HasEither(self leftMap f))
     }
 
     def leftFlatMap[LL, RR >: R](f: (L) => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR] = {
-      value match {
+      self match {
         case Left(x)  => safe(f(x))
         case Right(x) => HasEither(x.ok)
       }
     }
 
 
+    def transform[LL, RR](f: Either[L, R] => Either[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR] = {
+      safe(HasEither(f(self)))
+    }
+
+    def transformWith[LL, RR](f: Either[L, R] => FutureEither[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR] = {
+      safe(f(self))
+    }
+
+
     def fold[T](l: L => T, r: R => T)(implicit ec: ExecutionContext): Future[T] = {
-      safe(Future successful value.fold(l, r))
+      safe(Future successful self.fold(l, r))
     }
 
 
     def onRight[U](f: R => U)(implicit ec: ExecutionContext): Unit = {
-      value onRight f
+      self onRight f
     }
 
     def onLeft[U](f: L => U)(implicit ec: ExecutionContext): Unit = {
-      value onLeft f
+      self onLeft f
     }
 
 
-    def toRight(implicit ec: ExecutionContext): FutureOption[R] = {
-      FutureOption(value.toRight)
+    def toRight: FutureOption[R] = {
+      FutureOption(self.toRight)
     }
 
-    def toLeft(implicit ec: ExecutionContext): FutureOption[L] = {
-      FutureOption(value.toLeft)
+    def toLeft: FutureOption[L] = {
+      FutureOption(self.toLeft)
     }
 
 
-    def await(timeout: Duration) = value
+    def await(timeout: Duration) = self
 
 
     def recover[LL >: L, RR >: R](pf: PartialFunction[Throwable, Either[LL, RR]])
@@ -268,8 +308,8 @@ object FutureEither {
     def recoverWith[LL >: L, RR >: R](pf: PartialFunction[Throwable, FutureEither[LL, RR]])
       (implicit ec: ExecutionContext): FutureEither[LL, RR] = this
 
-    
-    override def toString = s"FutureEither($value)"
+
+    override def toString = s"FutureEither($self)"
 
 
     private def safe[T](f: => Future[T]): Future[T] = {

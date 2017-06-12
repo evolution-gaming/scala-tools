@@ -1,11 +1,13 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
 import org.scalatest.{Assertions, FunSuite, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.util.Success
 import scala.util.control.NoStackTrace
 
 class FutureEitherSpec extends FunSuite with Matchers {
@@ -406,6 +408,30 @@ class FutureEitherSpec extends FunSuite with Matchers {
       3.ok.fe)).block shouldEqual 1.ko
   }
 
+  test("transform") {
+    re.transform(_.map(_ => "rr")).block shouldEqual "rr".ok
+    rfe.transform(_.map(_ => "rr")).block shouldEqual "rr".ok
+    le.transform(_.leftMap(_ => "ll")).block shouldEqual "ll".ko
+    lfe.transform(_.leftMap(_ => "ll")).block shouldEqual "ll".ko
+  }
+
+  test("transformWith") {
+    re.transformWith(_.map(_ => "rr").fe).block shouldEqual "rr".ok
+    rfe.transformWith(_.map(_ => "rr").fe).block shouldEqual "rr".ok
+    le.transformWith(_.leftMap(_ => "ll").fe).block shouldEqual "ll".ko
+    lfe.transformWith(_.leftMap(_ => "ll").fe).block shouldEqual "ll".ko
+  }
+
+  test("andThen") {
+    var x = 0
+    re andThen { case Right(_) => x += 1 }
+    rfe andThen { case Right(_) => x += 1 }
+    le andThen { case Left(_) => x += 1 }
+    lfe andThen { case Left(_) => x += 1 }
+    x shouldEqual 4
+  }
+
+
   test("toString") {
     le.toString shouldEqual "FutureEither(Left(l))"
     re.toString shouldEqual "FutureEither(Right(r))"
@@ -418,6 +444,11 @@ class FutureEitherSpec extends FunSuite with Matchers {
 
   test("fe") {
     (Future successful "x").fe[String].block shouldEqual Right("x")
+  }
+
+  test("value") {
+    le.value shouldEqual Some(Success("l".ko))
+    re.value shouldEqual Some(Success("r".ok))
   }
 
   private val timeout = 10.seconds

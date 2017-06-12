@@ -1,20 +1,37 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
+
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success}
 import scala.language.higherKinds
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 sealed trait FutureOption[+T] {
 
   def future: Future[Option[T]]
 
+  def value: Option[Try[Option[T]]]
+
 
   def map[TT](f: T => TT)(implicit ec: ExecutionContext): FutureOption[TT]
 
   def flatMap[TT](f: T => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT]
+
+
+  def transform[TT](f: Option[T] => Option[TT])(implicit executor: ExecutionContext): FutureOption[TT]
+
+  def transformWith[TT](f: Option[T] => FutureOption[TT])(implicit executor: ExecutionContext): FutureOption[TT]
+
+  def andThen[U](pf: PartialFunction[Option[T], U])(implicit ec: ExecutionContext): FutureOption[T] = {
+    transform { x =>
+      try if (pf.isDefinedAt(x)) pf(x)
+      catch { case NonFatal(t) => ec reportFailure t }
+      x
+    }
+  }
 
 
   def fold[TT](z: => TT)(f: T => TT)(implicit ec: ExecutionContext): Future[TT]
@@ -33,11 +50,11 @@ sealed trait FutureOption[+T] {
   def withFilter(p: T => Boolean): WithFilter = new WithFilter(p)
 
 
-  def isEmpty(implicit ec: ExecutionContext): Future[Boolean] = fold(true)(_ => false)
+  def isEmpty: Future[Boolean] = fold(true)(_ => false)(CurrentThreadExecutionContext)
 
-  def isDefined(implicit ec: ExecutionContext): Future[Boolean] = fold(false)(_ => true)
+  def isDefined: Future[Boolean] = fold(false)(_ => true)(CurrentThreadExecutionContext)
 
-  def nonEmpty(implicit ec: ExecutionContext): Future[Boolean] = isDefined
+  def nonEmpty: Future[Boolean] = isDefined
 
 
   def |[TT >: T](or: => TT)(implicit ec: ExecutionContext): Future[TT] = getOrElse(or)
@@ -74,7 +91,7 @@ sealed trait FutureOption[+T] {
     flatMap { x => if (pf isDefinedAt x) pf(x) else FutureOption.empty }
   }
 
-  
+
   def recover[TT >: T](pf: PartialFunction[Throwable, TT])
     (implicit ec: ExecutionContext): FutureOption[TT]
 
@@ -96,7 +113,7 @@ sealed trait FutureOption[+T] {
     def foreach[TT](f: T => TT)(implicit ec: ExecutionContext): Unit = {
       self filter p foreach f
     }
-    
+
     def withFilter(q: T => Boolean): WithFilter = {
       new WithFilter(x => p(x) && q(x))
     }
@@ -131,17 +148,20 @@ object FutureOption {
   }
 
 
-  private case class HasFuture[+T](value: Future[Option[T]]) extends FutureOption[T] {
+  private case class HasFuture[+T](self: Future[Option[T]]) extends FutureOption[T] {
 
-    def future: Future[Option[T]] = value
+    def future: Future[Option[T]] = self
+
+    def value: Option[Try[Option[T]]] = self.value
+
 
     def map[TT](f: T => TT)(implicit ec: ExecutionContext): FutureOption[TT] = {
-      HasFuture(value map { _ map f })
+      HasFuture(self map { _ map f })
     }
 
     def flatMap[TT](f: T => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
       HasFuture(for {
-        x <- value
+        x <- self
         x <- x match {
           case None    => Future successful None
           case Some(x) => f(x).future
@@ -149,13 +169,25 @@ object FutureOption {
       } yield x)
     }
 
+    def transform[TT](f: Option[T] => Option[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
+      HasFuture(self.map(f))
+    }
+
+    def transformWith[TT](f: Option[T] => FutureOption[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
+      HasFuture(for {
+        x <- self
+        x <- f(x).future
+      } yield x)
+    }
+
+
     def fold[TT](z: => TT)(f: T => TT)(implicit ec: ExecutionContext): Future[TT] = {
-      value map { _.fold(z)(f)}
+      self map { _.fold(z)(f) }
     }
 
     def orElse[TT >: T](or: => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
       HasFuture(for {
-        x <- value
+        x <- self
         x <- x match {
           case None    => or.future
           case Some(x) => Future successful Some(x)
@@ -164,25 +196,25 @@ object FutureOption {
     }
 
     def filter(f: T => Boolean)(implicit ec: ExecutionContext): FutureOption[T] = {
-      HasFuture(value map { _.filter(f) })
+      HasFuture(self map { _.filter(f) })
     }
 
     def foreach[TT](f: T => TT)(implicit ec: ExecutionContext): Unit = {
-      for {x <- value; x <- x} f(x)
+      for {x <- self; x <- x} f(x)
     }
 
-    def await(timeout: Duration): Option[T] = Await.result(value, timeout)
+    def await(timeout: Duration): Option[T] = Await.result(self, timeout)
 
     def toRight[L](l: => L)(implicit ec: ExecutionContext): FutureEither[L, T] = {
-      FutureEither(value map {_.toRight(l)})
+      FutureEither(self map { _.toRight(l) })
     }
 
     def toLeft[R](r: => R)(implicit ec: ExecutionContext): FutureEither[T, R] = {
-      FutureEither(value map {_.toLeft(r)})
+      FutureEither(self map { _.toLeft(r) })
     }
 
     def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      HasFuture(value map { _ collect pf })
+      HasFuture(self map { _ collect pf })
     }
 
     def recover[TT >: T](pf: PartialFunction[Throwable, TT])
@@ -197,7 +229,7 @@ object FutureOption {
       HasFuture(future recoverWith { case x if pf isDefinedAt x => pf(x).future })
     }
 
-    override def toString = value.value match {
+    override def toString = self.value match {
       case Some(Success(value)) => s"FutureOption($value)"
       case Some(Failure(value)) => s"FutureOption($value)"
       case None                 => "FutureOption(<not completed>)"
@@ -205,52 +237,65 @@ object FutureOption {
   }
 
 
-  private case class HasOption[+T](value: Option[T]) extends FutureOption[T] {
+  private case class HasOption[+T](self: Option[T]) extends FutureOption[T] {
 
-    def future: Future[Option[T]] = Future successful value
+    def future: Future[Option[T]] = Future successful self
+
+    def value: Option[Try[Option[T]]] = Some(Success(self))
+
 
     def map[TT](f: T => TT)(implicit ec: ExecutionContext): FutureOption[TT] = {
-      safe(HasOption(value map f))
+      safe(HasOption(self map f))
     }
 
     def flatMap[TT](f: T => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      value match {
+      self match {
         case None    => HasOption(None)
         case Some(x) => safe(f(x))
       }
     }
 
+
+    def transform[TT](f: Option[T] => Option[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
+      safe(HasOption(f(self)))
+    }
+
+    def transformWith[TT](f: Option[T] => FutureOption[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
+      safe(f(self))
+    }
+
+
     def fold[TT](z: => TT)(f: T => TT)(implicit ec: ExecutionContext): Future[TT] = {
-      safe(Future successful value.fold(z)(f))
+      safe(Future successful self.fold(z)(f))
     }
 
     def orElse[TT >: T](or: => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      value match {
+      self match {
         case Some(_) => this
         case None    => safe(or)
       }
     }
 
     def filter(f: T => Boolean)(implicit ec: ExecutionContext): FutureOption[T] = {
-      HasOption(value.filter(f))
+      HasOption(self.filter(f))
     }
 
     def foreach[TT](f: T => TT)(implicit ec: ExecutionContext): Unit = {
-      value foreach f
+      self foreach f
     }
 
-    def await(timeout: Duration): Option[T] = value
+    def await(timeout: Duration): Option[T] = self
 
     def toRight[L](l: => L)(implicit ec: ExecutionContext): FutureEither[L, T] = {
-      FutureEither(value.toRight(l))
+      FutureEither(self.toRight(l))
     }
 
     def toLeft[R](r: => R)(implicit ec: ExecutionContext): FutureEither[T, R] = {
-      FutureEither(value.toLeft(r))
+      FutureEither(self.toLeft(r))
     }
 
     def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      HasOption(value collect pf)
+      HasOption(self collect pf)
     }
 
     def recover[TT >: T](pf: PartialFunction[Throwable, TT])
@@ -268,6 +313,6 @@ object FutureOption {
       try f catch { case NonFatal(x) => HasFuture(Future failed x) }
     }
 
-    override def toString = s"FutureOption($value)"
+    override def toString = s"FutureOption($self)"
   }
 }

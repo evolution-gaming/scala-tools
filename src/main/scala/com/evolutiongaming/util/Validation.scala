@@ -1,5 +1,6 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.github.t3hnar.scalax._
 
 import scala.annotation.tailrec
@@ -309,7 +310,7 @@ object Validation {
       self map (e => e.fold(l)(r))
     }
 
-    def fe(implicit ec: ExecutionContext): FutureEither[Unit, T] = self.map(_.toRight(())).fe
+    def fe: FutureEither[Unit, T] = self.map(_.toRight(()))(CurrentThreadExecutionContext).fe
 
     def fo: FutureOption[T] = FutureOption(self)
 
@@ -328,8 +329,8 @@ object Validation {
   }
 
   implicit class FutureOfAnyOps[T](val self: Future[T]) extends AnyVal {
-    def fo(implicit ec: ExecutionContext): FutureOption[T] = FutureOption(self map Option.apply)
+    def fo: FutureOption[T] = FutureOption(self.map(Option.apply)(CurrentThreadExecutionContext))
 
-    def fe[L](implicit ec: ExecutionContext): FutureEither[L, T] = FutureEither(self map Right.apply)
+    def fe[L]: FutureEither[L, T] = FutureEither(self.map(Right.apply)(CurrentThreadExecutionContext))
   }
 }
