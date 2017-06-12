@@ -31,6 +31,8 @@ scalacOptions ++= Seq(
 
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnings")
 
+resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
+
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.2",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
