@@ -152,13 +152,10 @@ object FutureEither {
     }
 
     def flatMap[LL >: L, RR](f: R => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR] = {
-      HasFuture(for {
-        x <- self
-        x <- x match {
-          case Left(x)  => Future successful x.ko
-          case Right(x) => f(x).future
-        }
-      } yield x)
+      HasFuture(self.flatMap {
+        case Left(x)  => Future successful x.ko
+        case Right(x) => f(x).future
+      })
     }
 
 
@@ -167,13 +164,10 @@ object FutureEither {
     }
 
     def leftFlatMap[LL, RR >: R](f: (L) => FutureEither[LL, RR])(implicit ec: ExecutionContext): FutureEither[LL, RR] = {
-      HasFuture(for {
-        x <- self
-        x <- x match {
-          case Left(x)  => f(x).future
-          case Right(x) => Future successful x.ok
-        }
-      } yield x)
+      HasFuture(self.flatMap {
+        case Left(x)  => f(x).future
+        case Right(x) => Future successful x.ok
+      })
     }
 
 
@@ -182,10 +176,7 @@ object FutureEither {
     }
 
     def transformWith[LL, RR](f: Either[L, R] => FutureEither[LL, RR])(implicit executor: ExecutionContext): FutureEither[LL, RR] = {
-      HasFuture(for {
-        x <- self
-        x <- f(x).future
-      } yield x)
+      HasFuture(self.flatMap(f(_).future))
     }
 
 

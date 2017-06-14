@@ -160,13 +160,10 @@ object FutureOption {
     }
 
     def flatMap[TT](f: T => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      HasFuture(for {
-        x <- self
-        x <- x match {
-          case None    => Future successful None
-          case Some(x) => f(x).future
-        }
-      } yield x)
+      HasFuture(self.flatMap {
+        case None    => Future successful None
+        case Some(x) => f(x).future
+      })
     }
 
     def transform[TT](f: Option[T] => Option[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
@@ -174,10 +171,7 @@ object FutureOption {
     }
 
     def transformWith[TT](f: Option[T] => FutureOption[TT])(implicit executor: ExecutionContext): FutureOption[TT] = {
-      HasFuture(for {
-        x <- self
-        x <- f(x).future
-      } yield x)
+      HasFuture(self.flatMap(f(_).future))
     }
 
 
@@ -186,13 +180,10 @@ object FutureOption {
     }
 
     def orElse[TT >: T](or: => FutureOption[TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
-      HasFuture(for {
-        x <- self
-        x <- x match {
-          case None    => or.future
-          case Some(x) => Future successful Some(x)
-        }
-      } yield x)
+      HasFuture(self.flatMap {
+        case None    => or.future
+        case Some(x) => Future successful Some(x)
+      })
     }
 
     def filter(f: T => Boolean)(implicit ec: ExecutionContext): FutureOption[T] = {
