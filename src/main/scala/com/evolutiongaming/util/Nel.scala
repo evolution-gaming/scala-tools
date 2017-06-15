@@ -59,6 +59,8 @@ case class Nel[+A](head: A, tail: List[A]) {
 
   def forall(p: A => Boolean): Boolean = p(head) && tail.forall(p)
 
+  def contains[AA >: A](a: AA): Boolean = exists(_ == a)
+
   def foldLeft[B](z: B)(f: (B, A) => B): B = {
     tail.foldLeft(f(z, head))(f)
   }

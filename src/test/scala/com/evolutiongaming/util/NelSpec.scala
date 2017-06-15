@@ -94,6 +94,13 @@ class NelSpec extends FunSuite with Matchers {
     (1 :: 2 :: Nel) forall { _ == 1 } shouldEqual false
   }
 
+  test("contains") {
+    (1 :: Nel) contains 1 shouldEqual true
+    (1 :: Nel) contains 2 shouldEqual false
+    (1 :: 2 :: Nel) contains 1 shouldEqual true
+    (1 :: 2 :: Nel) contains 2 shouldEqual true
+  }
+
   test("find") {
     (1 :: Nel) find { _ == 1 } shouldEqual Some(1)
     (1 :: Nel) find { _ == 2 } shouldEqual None
