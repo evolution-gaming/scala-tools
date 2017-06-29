@@ -4,6 +4,8 @@ import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
 import org.scalatest.{Assertions, FunSuite, Matchers}
+import org.scalatest.EitherValues._
+import org.scalatest.concurrent.ScalaFutures._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -180,6 +182,26 @@ class FutureEitherSpec extends FunSuite with Matchers {
     (fe recoverWith { case _: TestException => le }).block shouldEqual l
     (fe recoverWith { case _: TestException => rfe }).block shouldEqual r
     (fe recoverWith { case _: TestException => lfe }).block shouldEqual l
+  }
+
+  test("zipWith") {
+    le.zipWith(le)(_ + _).future.futureValue.left.value shouldBe "l"
+    le.zipWith(re)(_ + _).future.futureValue.left.value shouldBe "l"
+    re.zipWith(le)(_ + _).future.futureValue.left.value shouldBe "l"
+    re.zipWith(re)(_ + _).future.futureValue.right.value shouldBe "rr"
+
+    lfe.zipWith(lfe)(_ + _).future.futureValue.left.value shouldBe "l"
+    lfe.zipWith(rfe)(_ + _).future.futureValue.left.value shouldBe "l"
+    rfe.zipWith(lfe)(_ + _).future.futureValue.left.value shouldBe "l"
+    rfe.zipWith(rfe)(_ + _).future.futureValue.right.value shouldBe "rr"
+
+    le.zipWith(lfe)(_ + _).future.futureValue.left.value shouldBe "l"
+    lfe.zipWith(le)(_ + _).future.futureValue.left.value shouldBe "l"
+    le.zipWith(rfe)(_ + _).future.futureValue.left.value shouldBe "l"
+    rfe.zipWith(le)(_ + _).future.futureValue.left.value shouldBe "l"
+
+    rfe.zipWith(re)(_ + _).future.futureValue.right.value shouldBe "rr"
+    re.zipWith(rfe)(_ + _).future.futureValue.right.value shouldBe "rr"
   }
 
   test("orElse") {
@@ -403,6 +425,53 @@ class FutureEitherSpec extends FunSuite with Matchers {
       3.ok.fe)).block shouldEqual 1.ko
 
     FutureEither.list(List(
+      (Future successful 1.ko).fe,
+      (Future successful 2.ok).fe,
+      3.ok.fe)).block shouldEqual 1.ko
+  }
+
+  test("sequence") {
+    FutureEither.sequence(Seq(
+      1.ok.fe,
+      2.ok.fe,
+      3.ok.fe)).block shouldEqual Seq(1, 2, 3).ok
+
+    FutureEither.sequence(Seq(
+      (Future successful 1.ok).fe,
+      (Future successful 2.ok).fe,
+      (Future successful 3.ok).fe)).block shouldEqual Seq(1, 2, 3).ok
+
+    FutureEither.sequence(Seq(
+      1.ok.fe,
+      (Future successful 2.ok).fe,
+      3.ok.fe)).block shouldEqual Seq(1, 2, 3).ok
+
+    FutureEither.sequence(Seq(
+      1.ko.fe,
+      2.ok.fe,
+      3.ok.fe)).block shouldEqual 1.ko
+
+    FutureEither.sequence(Seq(
+      1.ko.fe,
+      2.ko.fe,
+      3.ok.fe)).block shouldEqual 1.ko
+
+    FutureEither.sequence(Seq(
+      1.ko.fe,
+      (Future successful 2.ok).fe,
+      (Future successful 3.ok).fe)).block shouldEqual 1.ko
+
+    FutureEither.sequence(Seq(
+      1.ko.fe,
+      (Future successful 2.ko).fe,
+      (Future successful 3.ok).fe)).block shouldEqual 1.ko
+
+    FutureEither.sequence(Seq(
+      1.ko.fe,
+      (Future successful 2.ok).fe,
+      3.ok.fe)).block shouldEqual 1.ko
+
+    FutureEither.sequence(Seq(
       (Future successful 1.ko).fe,
       (Future successful 2.ok).fe,
       3.ok.fe)).block shouldEqual 1.ko

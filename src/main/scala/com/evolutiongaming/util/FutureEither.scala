@@ -3,7 +3,7 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 
-import scala.annotation.tailrec
+import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -109,6 +109,18 @@ sealed trait FutureEither[+L, +R] {
 
   def recoverWith[LL >: L, RR >: R](pf: PartialFunction[Throwable, FutureEither[LL, RR]])
     (implicit ec: ExecutionContext): FutureEither[LL, RR]
+
+  def zipWith[LL >: L, RR, RRR](that: FutureEither[LL, RR])(f: (R, RR) => RRR)
+    (implicit executionContext: ExecutionContext): FutureEither[LL, RRR] = {
+
+    future.zipWith(that.future) { (er, err) =>
+      for {
+        r <- er
+        rr <- err
+      } yield f(r, rr)
+    }.fe
+  }
+
 }
 
 object FutureEither {
@@ -120,25 +132,15 @@ object FutureEither {
   def apply[L, R](x: Future[Either[L, R]]): FutureEither[L, R] = HasFuture[L, R](x)
 
   def list[L, R](xs: List[FutureEither[L, R]])
-    (implicit ec: ExecutionContext): FutureEither[L, List[R]] = {
+    (implicit ec: ExecutionContext): FutureEither[L, List[R]] = sequence(xs)
 
-    val (fs, es) = xs.foldLeft(List[HasFuture[L, R]]() -> List[HasEither[L, R]]()) {
-      case ((fs, es), x) => x match {
-        case x: HasFuture[L, R] => (x :: fs, es)
-        case x: HasEither[L, R] => (fs, x :: es)
-      }
-    }
+  def sequence[L, R, M[X] <: TraversableOnce[X]](in: M[FutureEither[L, R]])
+    (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[FutureEither[L, R]], R, M[R]]): FutureEither[L, M[R]] = {
 
-    @tailrec def loop(xs: List[Either[L, R]], result: List[R] = Nil): Either[L, List[R]] = xs match {
-      case Nil            => result.reverse.ok
-      case Left(x) :: _   => x.ko
-      case Right(x) :: xs => loop(xs, x :: result)
-    }
-
-    if (fs.isEmpty) FutureEither(loop(es.reverse map { _.self }))
-    else FutureEither(for {xs <- Future.sequence(xs map { _.future })} yield loop(xs))
+    in.foldLeft(Future.successful(cbf(in)).fe[L]) {
+      case (acc, next: FutureEither[L, R]) => acc.zipWith(next)(_ += _)
+    }.map(_.result())
   }
-
 
   private case class HasFuture[+L, +R](self: Future[Either[L, R]]) extends FutureEither[L, R] {
 
