@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Either, Failure, Success, Try}
-
+import scala.language.higherKinds
 
 sealed trait FutureEither[+L, +R] {
 
@@ -113,12 +113,14 @@ sealed trait FutureEither[+L, +R] {
   def zipWith[LL >: L, RR, RRR](that: FutureEither[LL, RR])(f: (R, RR) => RRR)
     (implicit executionContext: ExecutionContext): FutureEither[LL, RRR] = {
 
-    future.zipWith(that.future) { (er, err) =>
-      for {
-        r <- er
-        rr <- err
-      } yield f(r, rr)
-    }.fe
+    val result = for {
+      er <- future
+      err <- that.future
+    } yield for {
+      r <- er
+      rr <- err
+    } yield f(r, rr)
+    result.fe
   }
 
 }
