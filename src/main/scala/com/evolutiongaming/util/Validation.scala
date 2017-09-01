@@ -333,4 +333,8 @@ object Validation {
 
     def fe[L]: FutureEither[L, T] = FutureEither(self.map(Right.apply)(CurrentThreadExecutionContext))
   }
+
+  implicit class AnyOps[T](val self: T) extends AnyVal {
+    def future: Future[T] = Future successful self
+  }
 }
