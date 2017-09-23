@@ -27,6 +27,10 @@ case class Nel[+A](head: A, tail: List[A]) {
     Nel(head, tail ++ xs)
   }
 
+  def +:[AA >: A](a: AA): Nel[AA] = Nel(a, head :: tail)
+
+  def :+[AA >: A](a: AA): Nel[AA] = Nel(head, tail :+ a)
+
   def flatMap[B](f: A => Nel[B]): Nel[B] = f(head) ++ tail.flatMap(f andThen (_.toList))
 
   def ::[AA >: A](a: AA): Nel[AA] = Nel(a, head :: tail)
@@ -122,6 +126,20 @@ case class Nel[+A](head: A, tail: List[A]) {
   def collectFirst[B](pf: PartialFunction[A, B]): Option[B] = toList collectFirst pf
 
   def last: A = tail.lastOption getOrElse head
+
+  def unzip[A1, A2](implicit asPair: A => (A1, A2)): (Nel[A1], Nel[A2]) = {
+    val (h1, h2) = asPair(head)
+    val (t1, t2) = tail.unzip
+    (Nel(h1, t1), Nel(h2, t2))
+  }
+
+  def unzip3[A1, A2, A3](implicit asTriple: A => (A1, A2, A3)): (Nel[A1], Nel[A2], Nel[A3]) = {
+    val (h1, h2, h3) = asTriple(head)
+    val (t1, t2, t3) = tail.unzip3
+    (Nel(h1, t1), Nel(h2, t2), Nel(h3, t3))
+  }
+
+  def iterator: Iterator[A] = toList.iterator
 
   override def toString: String = s"$productPrefix($head, ${ tail mkString ", " })"
 }

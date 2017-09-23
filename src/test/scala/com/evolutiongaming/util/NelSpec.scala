@@ -147,14 +147,30 @@ class NelSpec extends FunSuite with Matchers {
   }
 
   test("foldRight") {
-    (1 :: 2 :: 3 :: Nel).foldRight("") { (x, s) => s + x} shouldEqual "321"
+    (1 :: 2 :: 3 :: Nel).foldRight("") { (x, s) => s + x } shouldEqual "321"
   }
 
   test("reduceLeft") {
-    (1 :: 2 :: 3 :: Nel).reduceLeft[Any] { (s, x) => s.toString + x.toString} shouldEqual "123"
+    (1 :: 2 :: 3 :: Nel).reduceLeft[Any] { (s, x) => s.toString + x.toString } shouldEqual "123"
   }
 
   test("reduceRight") {
-    (1 :: 2 :: 3 :: Nel).reduceRight[Any] { (x, s) => s.toString + x.toString} shouldEqual "321"
+    (1 :: 2 :: 3 :: Nel).reduceRight[Any] { (x, s) => s.toString + x.toString } shouldEqual "321"
+  }
+
+  test("+:") {
+    1 +: Nel(2) shouldEqual Nel(1, 2)
+  }
+
+  test(":+") {
+    (Nel(1) :+ 2) shouldEqual Nel(1, 2)
+  }
+
+  test("unzip") {
+    Nel((1, 2)).unzip shouldEqual ((Nel(1), Nel(2)))
+  }
+
+  test("unzip3") {
+    Nel((1, 2, 3)).unzip3 shouldEqual ((Nel(1), Nel(2), Nel(3)))
   }
 }
