@@ -12,7 +12,7 @@ organizationHomepage := Some(url("http://evolutiongaming.com"))
 
 bintrayOrganization := Some("evolutiongaming")
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.12.4"
 
 crossScalaVersions := Seq("2.12.3", "2.11.11")
 
@@ -35,10 +35,10 @@ resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.2",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-  "com.typesafe" % "config" % "1.3.1",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
+  "com.typesafe" % "config" % "1.3.2",
   "com.evolutiongaming" %% "executor-tools" % "1.0.0",
-  "org.scalatest" %% "scalatest" % "3.0.3" % Test
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test
 )
 
 licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
