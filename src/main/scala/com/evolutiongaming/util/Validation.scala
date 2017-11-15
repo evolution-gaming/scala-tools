@@ -266,7 +266,7 @@ object Validation {
       * @tparam L type of error the `test` function returns
       * @tparam R type of the good value the `test` function produces
       */
-    def allValid[L, R, That](test: A => Either[L, R])(implicit cbf: CanBuildFrom[Repr, R, That]): Either[L, That] = {
+    def allValid[L, R, That](test: A => Either[L, R])(implicit cbf: CanBuildFrom[_, R, That]): Either[L, That] = {
       val b = cbf()
 
       @tailrec
