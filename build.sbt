@@ -14,7 +14,7 @@ bintrayOrganization := Some("evolutiongaming")
 
 scalaVersion := "2.12.4"
 
-crossScalaVersions := Seq("2.12.3", "2.11.11")
+crossScalaVersions := Seq("2.12.4", "2.11.11")
 
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
@@ -34,7 +34,7 @@ scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnin
 resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
 libraryDependencies ++= Seq(
-  "com.github.t3hnar" %% "scalax" % "3.2",
+  "com.github.t3hnar" %% "scalax" % "3.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
   "com.typesafe" % "config" % "1.3.2",
   "com.evolutiongaming" %% "executor-tools" % "1.0.0",

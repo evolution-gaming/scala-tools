@@ -10,6 +10,7 @@ import scala.language.higherKinds
 /**
   * Non empty list
   */
+@deprecated("Please use Nel from https://github.com/evolution-gaming/nel", "1.15")
 case class Nel[+A](head: A, tail: List[A]) {
 
   def toList: List[A] = head :: tail
