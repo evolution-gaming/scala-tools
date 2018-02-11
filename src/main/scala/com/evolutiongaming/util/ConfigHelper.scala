@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 
+@deprecated("use com.evolutiongaming.config.ConfigHelper instead", "1.2")
 object ConfigHelper {
 
   implicit class ConfigOps(val config: Config) extends AnyVal {
