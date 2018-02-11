@@ -14,7 +14,7 @@ bintrayOrganization := Some("evolutiongaming")
 
 scalaVersion := "2.12.4"
 
-crossScalaVersions := Seq("2.12.4", "2.11.11")
+crossScalaVersions := Seq("2.12.4", "2.11.12")
 
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
@@ -38,7 +38,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
   "com.typesafe" % "config" % "1.3.2",
   "com.evolutiongaming" %% "executor-tools" % "1.0.0",
-  "org.scalatest" %% "scalatest" % "3.0.4" % Test
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
 
 licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
