@@ -5,6 +5,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
 object FutureHelper {
+  private val futureUnit = Future.successful(())
 
   def traverseSequentially[A, B, M[X] <: TraversableOnce[X]](in: M[A])(f: A => Future[B])
     (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[A], B, M[B]]): Future[M[B]] = {
@@ -18,5 +19,10 @@ object FutureHelper {
         next <- f(next)
       } yield prev += next
     } map { builder => builder.result }
+  }
+
+  
+  implicit class FutureObjOps(val self: Future.type) extends AnyVal {
+    def unit: Future[Unit] = futureUnit
   }
 }
