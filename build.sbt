@@ -35,8 +35,7 @@ resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-  "com.typesafe" % "config" % "1.3.2",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
   "com.evolutiongaming" %% "executor-tools" % "1.0.0",
   "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
