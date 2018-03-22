@@ -19,4 +19,13 @@ notifications:
     on_success: never
     on_failure: always
     rooms:
-      secure: "ZkG0Ru1NcqJdGuf6gesro4xhAwU/zYCrU3FUOksYMtsdhd+SbVwLNXLlcBXZRQmsPKOPfC6McEyO6jc5Y05SXBkTNBzOw8Fe/bxEbBKYnxLQY7QrimfMstDu5Rz7xksNGDGiVxwXR+OtF3ixS6hzCR1rrHDrYmFQ/lPMGU+kyTJ54Vu81CBrhNbbuhswMx2N+QFLQDv090o8PgXa6YJJRo4k2qReQcZ6h7cCMVgfqzuJda/kmShl6HnOU4RjsIT5TLYWobLFdTJzPQdjtpASdwJyu2LAjF72BeO5jlNNp5eufrkRCaFbSt+NEYXV63DQqSb0QrPmur/n8M4RgumReDxNK3wPqrL4TanLsMcmTMEzVt2/GKJvt1HEila9HdLiZBhhDjV5NaekEbMmxh9azwUN2xpP6wlHbe3TkZsnly1r5V62hKePXP61Gatlp1HIXIGvfyLCDDyrvVzy1K+EELi3qDD865xgMJFB8BfRth6DUTzuc46Sqv/Iq03edp6VVUh9LUzrp4pU2BLsjMHU/aii+e5eoeqHLOzTphkZByg07z2zv9Jk27vgR1PO4G+LVV4l3RJVT8bU4mzV5ONX4k9Ss2UGaMQbvtao0hQGAo6XdRDyh3NfJVq/YG+vcDJZjOOsaUxlZRv2XWFpX6eiEu3sxYCz3kscmV0359HDeQ8="
+      secure: "MU7qC8SWczmrR5iz+SMoXaIxWMpCbkjQs7M0EgMDylesGY9LvqVHLJuBwl7LghqICHeyMDBv7v/o4I5OTowil4IThNIIJ4gwa9JSqdxfQQnhVTOf0K3/1WJe4DQEqyUOvcAsWOs95Zi/YROcC+GbiipU01H7sXcAb0LHOw+P7Z/LmsD2pANi/Io2BB+XXmiWDhK/XstgBE6ZQZMsttZrH1amjCZK/1d39OSGe0ZZYItVcaOnkUFV7BuQoZFGqyHJ9xBTBQw1L1zhcmzp0tMXqdTHtsOFEhesAeC9WpdIZQWk794FTKXT46quJjVJk1fKN2dWf6j19HmmRNvDTN4uol2MXtG3qqhJGIuZRHfd7Hn5au1Cbr4hYkWRFnjitRzqtdiVlYVVy3/QZA8Twl4k/U9k+hjKPfvkcJNivmlCqZQzZzP+QjRjpF4AmYWq+fOqOvg7hJANidbLIKvBLXTqBqoXJALAGGGji2U9jrvqgbf3Fjrqjuv2+DIN85aF+MkZ7bGP6Cy9et9ymmoRuQ5uCw3wUMg8rZMmsb9w6cQaP9aCsBz5g0vFyF9ITMcBD8gFuLVkMgHeOXC2ShLgbSlRobCBt07RSe3oXFsZtgGFHoi/+lFCeI3kE5W6NSJ+j6J76LjHhjrA05t4F4cDeu/UKc0Yp0dWgpcg+SYkLPbNpnY="
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
