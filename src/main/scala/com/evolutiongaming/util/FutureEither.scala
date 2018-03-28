@@ -144,6 +144,8 @@ object FutureEither {
     }.map(_.result())
   }
 
+  val unit: FutureEither[Nothing, Unit] = FutureEither(().ok)
+
   private case class HasFuture[+L, +R](self: Future[Either[L, R]]) extends FutureEither[L, R] {
 
     def future: Future[Either[L, R]] = self

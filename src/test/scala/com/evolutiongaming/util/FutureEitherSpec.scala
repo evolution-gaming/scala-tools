@@ -520,6 +520,12 @@ class FutureEitherSpec extends FunSuite with Matchers {
     re.value shouldEqual Some(Success("r".ok))
   }
 
+  test("unit is always the same value") {
+    val stringUnit: FutureEither[String, Unit] = FutureEither.unit
+    val longUnit: FutureEither[Long, Unit] = FutureEither.unit
+    stringUnit should be theSameInstanceAs longUnit
+  }
+
   private val timeout = 10.seconds
 
   def exception = throw new TestException
