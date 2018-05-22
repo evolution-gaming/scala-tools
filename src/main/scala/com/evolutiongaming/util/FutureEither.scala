@@ -6,9 +6,9 @@ import com.evolutiongaming.util.Validation._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.control.NonFatal
 import scala.util.{Either, Failure, Success, Try}
-import scala.language.higherKinds
 
 sealed trait FutureEither[+L, +R] {
 
@@ -123,6 +123,7 @@ sealed trait FutureEither[+L, +R] {
     result.fe
   }
 
+  def unit: FutureEither[L, Unit] = map { _ => {} }(CurrentThreadExecutionContext)
 }
 
 object FutureEither {

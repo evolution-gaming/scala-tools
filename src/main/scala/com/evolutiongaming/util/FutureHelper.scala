@@ -1,5 +1,7 @@
 package com.evolutiongaming.util
 
+import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
+
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
@@ -21,8 +23,12 @@ object FutureHelper {
     } map { builder => builder.result }
   }
 
-  
+
   implicit class FutureObjOps(val self: Future.type) extends AnyVal {
     def unit: Future[Unit] = futureUnit
+  }
+
+  implicit class FutureOps[T](val self: Future[T]) extends AnyVal {
+    def unit: Future[Unit] = self.map { _ => {} }(CurrentThreadExecutionContext)
   }
 }

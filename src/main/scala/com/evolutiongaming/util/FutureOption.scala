@@ -98,6 +98,8 @@ sealed trait FutureOption[+T] {
   def recoverWith[TT >: T](pf: PartialFunction[Throwable, FutureOption[TT]])
     (implicit ec: ExecutionContext): FutureOption[TT]
 
+  def unit: FutureOption[Unit] = map { _ => {} }(CurrentThreadExecutionContext)
+
 
   class WithFilter(p: T => Boolean) {
     private def self = FutureOption.this
