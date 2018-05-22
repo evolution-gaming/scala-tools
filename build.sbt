@@ -12,9 +12,9 @@ organizationHomepage := Some(url("http://evolutiongaming.com"))
 
 bintrayOrganization := Some("evolutiongaming")
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
-crossScalaVersions := Seq("2.12.4", "2.11.12")
+crossScalaVersions := Seq("2.12.6", "2.11.12")
 
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
@@ -34,8 +34,8 @@ scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnin
 resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
 libraryDependencies ++= Seq(
-  "com.github.t3hnar" %% "scalax" % "3.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
+  "com.github.t3hnar" %% "scalax" % "3.4",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
   "com.evolutiongaming" %% "executor-tools" % "1.0.0",
   "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
