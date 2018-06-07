@@ -83,9 +83,9 @@ sealed trait FutureOption[+T] {
   def ?>>[L](l: => L)(implicit ec: ExecutionContext): FutureEither[L, T] = toRight(l)
 
 
-  def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT]
+  def collect[TT](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT]
 
-  def collectWith[TT >: T](pf: PartialFunction[T, FutureOption[TT]])
+  def collectWith[TT](pf: PartialFunction[T, FutureOption[TT]])
     (implicit ec: ExecutionContext): FutureOption[TT] = {
 
     flatMap { x => if (pf isDefinedAt x) pf(x) else FutureOption.empty }
@@ -206,7 +206,7 @@ object FutureOption {
       FutureEither(self map { _.toLeft(r) })
     }
 
-    def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
+    def collect[TT](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
       HasFuture(self map { _ collect pf })
     }
 
@@ -222,7 +222,7 @@ object FutureOption {
       HasFuture(future recoverWith { case x if pf isDefinedAt x => pf(x).future })
     }
 
-    override def toString = self.value match {
+    override def toString: String = self.value match {
       case Some(Success(value)) => s"FutureOption($value)"
       case Some(Failure(value)) => s"FutureOption($value)"
       case None                 => "FutureOption(<not completed>)"
@@ -287,7 +287,7 @@ object FutureOption {
       FutureEither(self.toLeft(r))
     }
 
-    def collect[TT >: T](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
+    def collect[TT](pf: PartialFunction[T, TT])(implicit ec: ExecutionContext): FutureOption[TT] = {
       HasOption(self collect pf)
     }
 
