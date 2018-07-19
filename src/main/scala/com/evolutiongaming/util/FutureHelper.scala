@@ -6,6 +6,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
+@deprecated("use FutureHelper in `future-helper` lib", "2.2")
 object FutureHelper {
   private val futureUnit = Future.successful(())
 

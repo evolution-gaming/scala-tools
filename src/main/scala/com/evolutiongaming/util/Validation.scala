@@ -335,6 +335,7 @@ object Validation {
   }
 
   implicit class AnyOps[T](val self: T) extends AnyVal {
+    @deprecated("use FutureHelper in `future-helper` lib", "2.2")
     def future: Future[T] = Future successful self
   }
 }
