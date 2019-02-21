@@ -14,7 +14,7 @@ bintrayOrganization := Some("evolutiongaming")
 
 scalaVersion := crossScalaVersions.value.last
 
-crossScalaVersions := Seq("2.11.12", "2.12.6")
+crossScalaVersions := Seq("2.11.12", "2.12.8")
 
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
@@ -36,7 +36,7 @@ resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 libraryDependencies ++= Seq(
   "com.github.t3hnar" %% "scalax" % "3.4",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
-  "com.evolutiongaming" %% "executor-tools" % "1.0.0",
+  "com.evolutiongaming" %% "executor-tools" % "1.0.1",
   "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
 
