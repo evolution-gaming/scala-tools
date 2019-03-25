@@ -23,10 +23,34 @@ package com.evolutiongaming.util
   *   def stackTraceAsString(cause: Throwable): String =
   *     new StringWriter() tap { out => cause.printStackTrace(new PrintWriter(out)) } toString
   *
+  *
+  * Purpose of `let` and `|>` methods to evolve an operation within a method chain.
+  *
+  * What used to be
+  *
+  *   f1(f2(f3(a)))
+  *
+  * becomes
+  *
+  *   a |> f3 |> f2 |> f1
+  *
+  * What used to be
+  *
+  *   system.settings.config.getConfig("company.http.client")
+  *     .withFallback(system.settings.config.getConfig("akka.http.client"))
+  *
+  * becomes
+  *
+  *   (system.settings.config.getConfig _).let { config =>
+  *     config("company.http.client") withFallback config("akka.http.client")
+  *   }
+  *
   */
 
 object Tap {
   implicit class Ops[A](val a: A) extends AnyVal {
     def tap(f: A => Unit): A = { f(a); a }
+    def let[B](f: A => B): B = f(a)
+    def |>[B](f: A => B): B = f(a)
   }
 }
