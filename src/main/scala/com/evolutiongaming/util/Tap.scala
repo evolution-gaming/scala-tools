@@ -49,7 +49,7 @@ package com.evolutiongaming.util
 
 object Tap {
   implicit class Ops[A](val a: A) extends AnyVal {
-    def tap(f: A => Unit): A = { f(a); a }
+    def tap[B](f: A => B): A = { f(a); a }
     def let[B](f: A => B): B = f(a)
     def |>[B](f: A => B): B = f(a)
   }
