@@ -100,6 +100,7 @@ sealed trait FutureOption[+T] {
 
   def unit: FutureOption[Unit] = map { _ => {} }(CurrentThreadExecutionContext)
 
+  def discard[TT]: FutureOption[TT] = flatMap(_ => FutureOption.empty)(CurrentThreadExecutionContext)
 
   class WithFilter(p: T => Boolean) {
     private def self = FutureOption.this
