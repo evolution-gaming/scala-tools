@@ -3,10 +3,8 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.language.higherKinds
 import scala.util.control.NonFatal
 import scala.util.{Either, Failure, Success, Try}
 
@@ -126,7 +124,7 @@ sealed trait FutureEither[+L, +R] {
   def unit: FutureEither[L, Unit] = map { _ => {} }(CurrentThreadExecutionContext)
 }
 
-object FutureEither {
+object FutureEither extends FutureEitherSequence {
 
   def apply[L, R](x: Either[L, R]): FutureEither[L, R] = HasEither[L, R](x)
 
@@ -136,14 +134,6 @@ object FutureEither {
 
   def list[L, R](xs: List[FutureEither[L, R]])
     (implicit ec: ExecutionContext): FutureEither[L, List[R]] = sequence(xs)
-
-  def sequence[L, R, M[X] <: TraversableOnce[X]](in: M[FutureEither[L, R]])
-    (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[FutureEither[L, R]], R, M[R]]): FutureEither[L, M[R]] = {
-
-    in.foldLeft(Future.successful(cbf(in)).fe[L]) {
-      case (acc, next: FutureEither[L, R]) => acc.zipWith(next)(_ += _)
-    }.map(_.result())
-  }
 
   private val completedUnit: FutureEither[Nothing, Unit] = FutureEither(().ok)
 

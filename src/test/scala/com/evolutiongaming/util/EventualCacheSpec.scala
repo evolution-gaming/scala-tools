@@ -65,7 +65,7 @@ class EventualCacheSpec extends WordSpec with Matchers {
       }
 
       "not evaluate values concurrently for the same key" in new Scope {
-        val future = cache.getOrUpdate(0)(promise.future)
+        cache.getOrUpdate(0)(promise.future)
         val future2 = cache.getOrUpdate(0)(Future.failed(TestException))
 
         promise.success(Some("0"))
@@ -134,7 +134,7 @@ class EventualCacheSpec extends WordSpec with Matchers {
       }
 
       "not evaluate values concurrently for the same key" in new Scope {
-        val future = async {
+        async {
           cache.getOrUpdateAwait(0)(promise.future)
         }
 

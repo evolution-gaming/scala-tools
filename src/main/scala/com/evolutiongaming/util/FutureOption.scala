@@ -2,10 +2,8 @@ package com.evolutiongaming.util
 
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.language.higherKinds
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -123,7 +121,7 @@ sealed trait FutureOption[+T] {
   }
 }
 
-object FutureOption {
+object FutureOption extends FutureOptionSequence {
 
   def apply[T](x: T): FutureOption[T] = FutureOption(Some(x))
 
@@ -132,24 +130,6 @@ object FutureOption {
   def apply[T](x: Future[Option[T]]): FutureOption[T] = HasFuture(x)
 
   def empty[T]: FutureOption[T] = HasOption(None)
-
-  def sequence[A, M[X] <: TraversableOnce[X]](in: M[FutureOption[A]])
-    (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[FutureOption[A]], A, M[A]]): Future[M[A]] = {
-
-    traverse(in)(identity)
-  }
-
-  def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(f: A => FutureOption[B])
-    (implicit ec: ExecutionContext, cbf: CanBuildFrom[M[A], B, M[B]]): Future[M[B]] = {
-
-    in.foldLeft(Future successful cbf(in)) { (builder, x) =>
-      for {
-        prev <- builder
-        x <- f(x).future
-      } yield prev ++= x
-    } map { _.result }
-  }
-
 
   private case class HasFuture[+T](self: Future[Option[T]]) extends FutureOption[T] {
 

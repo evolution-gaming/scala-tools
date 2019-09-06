@@ -533,11 +533,13 @@ class FutureEitherSpec extends FunSuite with Matchers {
   def interceptFe[L, R](f: => FutureEither[L, R]): Unit = {
     val x = f
     Assertions.intercept[TestException] { x.block }
+    ()
   }
 
   def interceptF[T](f: => Future[T]): Unit = {
     val x = f
     Assertions.intercept[TestException] { x.block }
+    ()
   }
 
   class TestException extends RuntimeException("test") with NoStackTrace

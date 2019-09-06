@@ -31,24 +31,24 @@ class FutureOptionSpec extends FunSuite with Matchers {
   }
 
   test("flatMap") {
-    (for {x <- so; y <- so} yield 1).block shouldEqual Some(1)
+    (for {_ <- so; _ <- so} yield 1).block shouldEqual Some(1)
 
-    (for {x <- so; y <- no} yield 1).block shouldEqual None
-    (for {x <- no; y <- so} yield 1).block shouldEqual None
-    (for {x <- no; y <- no} yield 1).block shouldEqual None
-    (for {x <- so; y <- nfo} yield 1).block shouldEqual None
-    (for {x <- nfo; y <- so} yield 1).block shouldEqual None
+    (for {_ <- so; _ <- no} yield 1).block shouldEqual None
+    (for {_ <- no; _ <- so} yield 1).block shouldEqual None
+    (for {_ <- no; _ <- no} yield 1).block shouldEqual None
+    (for {_ <- so; _ <- nfo} yield 1).block shouldEqual None
+    (for {_ <- nfo; _ <- so} yield 1).block shouldEqual None
 
-    (for {x <- sfo; y <- sfo} yield 1).block shouldEqual Some(1)
+    (for {_ <- sfo; _ <- sfo} yield 1).block shouldEqual Some(1)
 
-    (for {x <- sfo; y <- nfo} yield 1).block shouldEqual None
-    (for {x <- nfo; y <- sfo} yield 1).block shouldEqual None
-    (for {x <- nfo; y <- nfo} yield 1).block shouldEqual None
-    (for {x <- sfo; y <- no} yield 1).block shouldEqual None
-    (for {x <- no; y <- sfo} yield 1).block shouldEqual None
+    (for {_ <- sfo; _ <- nfo} yield 1).block shouldEqual None
+    (for {_ <- nfo; _ <- sfo} yield 1).block shouldEqual None
+    (for {_ <- nfo; _ <- nfo} yield 1).block shouldEqual None
+    (for {_ <- sfo; _ <- no} yield 1).block shouldEqual None
+    (for {_ <- no; _ <- sfo} yield 1).block shouldEqual None
 
-    (for {x <- so; y <- sfo} yield 1).block shouldEqual Some(1)
-    (for {x <- sfo; y <- so} yield 1).block shouldEqual Some(1)
+    (for {_ <- so; _ <- sfo} yield 1).block shouldEqual Some(1)
+    (for {_ <- sfo; _ <- so} yield 1).block shouldEqual Some(1)
   }
 
   test("fold") {
@@ -139,9 +139,12 @@ class FutureOptionSpec extends FunSuite with Matchers {
     (for {x <- nfo if x == ""; if x == ""} yield x).block shouldEqual None
 
     (for {
-      x <- so if x == ""
-      x <- sfo if x == ""
-      x <- no if x == ""
+      a <- so
+      _ = a if a == ""
+      b <- sfo
+      _ = b if b == ""
+      c <- no if c == ""
+      _ = c if c == ""
       x <- nfo if x == ""
     } yield x).block shouldEqual None
   }
@@ -324,11 +327,13 @@ class FutureOptionSpec extends FunSuite with Matchers {
   def interceptFo[T](f: => FutureOption[T]): Unit = {
     val x = f
     Assertions.intercept[TestException] { x.block }
+    ()
   }
 
   def interceptF[T](f: => Future[T]): Unit = {
     val x = f
     Assertions.intercept[TestException] { x.block }
+    ()
   }
 
   class TestException extends RuntimeException("test") with NoStackTrace

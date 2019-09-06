@@ -41,7 +41,7 @@ class ValidationSpec extends FunSuite with Matchers {
     EitherOps(1.ok) foreach { x = _ }
     x shouldEqual 1
 
-    EitherOps(2.ko) foreach { x = _ }
+    EitherOps(2.ko).asInstanceOf[EitherOps[Int, Int]] foreach { x = _ }
     x shouldEqual 1
   }
 
@@ -77,13 +77,13 @@ class ValidationSpec extends FunSuite with Matchers {
   }
 
   test("foldRight") {
-    0.ok foldRight { _ => 1 } shouldEqual 0
+    0.ok.asInstanceOf[Either[Int, Int]] foldRight { _ => 1 } shouldEqual 0
     0.ko foldRight { _ => 1 } shouldEqual 1
   }
 
   test("foldLeft") {
     0.ok foldLeft { _ => 1 } shouldEqual 1
-    0.ko foldLeft { _ => 1 } shouldEqual 0
+    0.ko.asInstanceOf[Either[Int, Int]] foldLeft { _ => 1 } shouldEqual 0
   }
 
   test("orElse") {
@@ -98,7 +98,7 @@ class ValidationSpec extends FunSuite with Matchers {
 
   test("onLeft") {
     var x = 0
-    1.ok onLeft { x = _ }
+    1.ok.asInstanceOf[Either[Int, Int]]  onLeft { x = _ }
     x shouldEqual 0
     1.ko onLeft { x = _ }
     x shouldEqual 1
@@ -108,7 +108,7 @@ class ValidationSpec extends FunSuite with Matchers {
     var x = 0
     1.ok[Int] onRight { x = _ }
     x shouldEqual 1
-    0.ko onRight { x = _ }
+    0.ko.asInstanceOf[Either[Int, Int]] onRight { x = _ }
     x shouldEqual 1
   }
 
@@ -144,13 +144,13 @@ class ValidationSpec extends FunSuite with Matchers {
   test("exists") {
     EitherOps(1.ok) exists { _ == 1 } shouldEqual true
     EitherOps(1.ok) exists { _ == 2 } shouldEqual false
-    EitherOps(0.ko) exists { _ == 1 } shouldEqual false
+    EitherOps(0.ko).asInstanceOf[EitherOps[Int, Int]] exists { _ == 1 } shouldEqual false
   }
 
   test("contains") {
     EitherOps(1.ok) contains 1 shouldEqual true
     EitherOps(1.ok) contains 2 shouldEqual false
-    EitherOps(0.ko) contains 1 shouldEqual false
+    EitherOps(0.ko).asInstanceOf[EitherOps[Int, Int]] contains 1 shouldEqual false
   }
 
   test("collect") {
@@ -235,7 +235,7 @@ class ValidationSpec extends FunSuite with Matchers {
   test("forall") {
     EitherOps(1.ok) forall (_ == 1) shouldEqual true
     EitherOps(1.ok) forall (_ == 2) shouldEqual false
-    EitherOps(1.ko) forall (_ == 1) shouldEqual true
+    EitherOps(1.ko).asInstanceOf[EitherOps[Int, Int]] forall (_ == 1) shouldEqual true
   }
 
   test("asInstanceV") {

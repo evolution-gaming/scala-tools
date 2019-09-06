@@ -3,14 +3,12 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.github.t3hnar.scalax._
 
-import scala.annotation.tailrec
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Either, Failure, Left, Right, Success, Try}
 
 
-object Validation {
+object Validation extends ValidationIterableOps {
 
   type V[+T] = Either[String, T]
 
@@ -67,11 +65,11 @@ object Validation {
 
     def onRight[U](f: R => U): Unit = self match {
       case Left(_)  =>
-      case Right(x) => f(x)
+      case Right(x) => f(x); ()
     }
 
     def onLeft[U](f: L => U): Unit = self match {
-      case Left(x)  => f(x)
+      case Left(x)  => f(x); ()
       case Right(_) =>
     }
 
@@ -218,7 +216,7 @@ object Validation {
       * @param left the expression to evaluate and return if this is a failure
       * @see toLeft
       */
-    def ?>>[B](left: ⇒ B): Either[B, A] = t.toOption.toRight(left)
+    def ?>>[B](left: => B): Either[B, A] = t.toOption.toRight(left)
 
     def leftMapToEither[B](f: Throwable => B): Either[B, A] = t match {
       case Success(right) => Right(right)
@@ -253,35 +251,7 @@ object Validation {
     }
   }
 
-  implicit class IterableOps[A, Repr](val self: Iterable[A]) extends AnyVal {
-
-    def ?>>[B](left: => B): Either[B, Iterable[A]] = if (self.isEmpty) Left(left) else Right(self)
-
-    /**
-      * Checks that all elements in `self` are valid by applying the `test` function to each.
-      * If all are valid, returns a [[scala.util.Right]] with a collection of whatever "good"
-      * values `test` returns. Otherwise returns the first [[scala.util.Left]] encountered.
-      *
-      * @param test function to apply to each element
-      * @tparam L type of error the `test` function returns
-      * @tparam R type of the good value the `test` function produces
-      */
-    def allValid[L, R, That](test: A => Either[L, R])(implicit cbf: CanBuildFrom[_, R, That]): Either[L, That] = {
-      val b = cbf()
-
-      @tailrec
-      def loop(it: Iterable[A]): Either[L, That] = {
-        it.headOption match {
-          case Some(a) => test(a) match {
-            case Left(l)  => Left(l)
-            case Right(r) => b += r; loop(it.tail)
-          }
-          case None    => b.result().ok
-        }
-      }
-      loop(self)
-    }
-  }
+//  implicit class IterableOps[A, Repr](val self: Iterable[A]) extends AnyVal { ValidationPrivate.IterableOps }
 
   implicit class FutureOfEitherOps[L, R](val self: Future[Either[L, R]]) extends AnyVal {
     def leftMap[LL](f: L => LL)(implicit ec: ExecutionContext): Future[Either[LL, R]] = {
