@@ -5,7 +5,6 @@ import com.github.t3hnar.scalax._
 
 import scala.annotation.tailrec
 import scala.collection.BuildFrom
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Either, Failure, Left, Right, Success, Try}
