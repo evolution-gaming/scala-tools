@@ -67,11 +67,11 @@ object Validation {
 
     def onRight[U](f: R => U): Unit = self match {
       case Left(_)  =>
-      case Right(x) => f(x)
+      case Right(x) => f(x); ()
     }
 
     def onLeft[U](f: L => U): Unit = self match {
-      case Left(x)  => f(x)
+      case Left(x)  => f(x); ()
       case Right(_) =>
     }
 
@@ -218,7 +218,7 @@ object Validation {
       * @param left the expression to evaluate and return if this is a failure
       * @see toLeft
       */
-    def ?>>[B](left: ⇒ B): Either[B, A] = t.toOption.toRight(left)
+    def ?>>[B](left: => B): Either[B, A] = t.toOption.toRight(left)
 
     def leftMapToEither[B](f: Throwable => B): Either[B, A] = t match {
       case Success(right) => Right(right)
