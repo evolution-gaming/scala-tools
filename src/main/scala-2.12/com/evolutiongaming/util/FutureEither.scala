@@ -149,7 +149,7 @@ object FutureEither {
 
   def unit[T]: FutureEither[T, Unit] = completedUnit
 
-  private case class HasFuture[+L, +R](self: Future[Either[L, R]]) extends FutureEither[L, R] {
+  private final case class HasFuture[+L, +R](self: Future[Either[L, R]]) extends FutureEither[L, R] {
 
     def future: Future[Either[L, R]] = self
 
@@ -236,7 +236,7 @@ object FutureEither {
   }
 
 
-  private case class HasEither[+L, +R](self: Either[L, R]) extends FutureEither[L, R] {
+  private final case class HasEither[+L, +R](self: Either[L, R]) extends FutureEither[L, R] {
 
     def future: Future[Either[L, R]] = Future successful self
 

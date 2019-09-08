@@ -32,25 +32,6 @@ class ValidationSpec extends FunSuite with Matchers {
     0.fail shouldEqual Left(0)
   }
 
-  test("map") {
-    EitherOps(1.ok) map { _ + 1 } shouldEqual 2.ok
-  }
-
-  test("foreach") {
-    var x = 0
-    EitherOps(1.ok) foreach { x = _ }
-    x shouldEqual 1
-
-    EitherOps(2.ko) foreach { x = _ }
-    x shouldEqual 1
-  }
-
-  test("flatMap") {
-    (for {x <- EitherOps(1.ok); y <- 2.ok} yield x + y) shouldEqual 3.ok
-    (for {x <- EitherOps(1.ok); y <- 0.ko[Int]} yield x + y) shouldEqual 0.ko
-    (for {x <- EitherOps(0.ko[Int]); y <- 2.ok} yield x + y) shouldEqual 0.ko
-  }
-
   test("toRight") {
     0.ok.toRight shouldEqual Some(0)
     0.ko[Int].toRight shouldEqual None
@@ -59,11 +40,6 @@ class ValidationSpec extends FunSuite with Matchers {
   test("toLeft") {
     0.ok.toLeft shouldEqual None
     0.ko[Int].toLeft shouldEqual Some(0)
-  }
-
-  test("toOption") {
-    EitherOps(1.ok).toOption shouldEqual Some(1)
-    EitherOps(0.ko[Int]).toOption shouldEqual None
   }
 
   test("toList") {
@@ -89,11 +65,6 @@ class ValidationSpec extends FunSuite with Matchers {
   test("orElse") {
     1.ok[Int] orElse 2.ok shouldEqual 1.ok
     0.ko orElse 0.ok shouldEqual 0.ok
-  }
-
-  test("getOrElse") {
-    EitherOps(1.ok[Int]) getOrElse 2 shouldEqual 1
-    EitherOps(0.ko) getOrElse 0 shouldEqual 0
   }
 
   test("onLeft") {
@@ -141,18 +112,6 @@ class ValidationSpec extends FunSuite with Matchers {
     0.ko.isKo shouldEqual true
   }
 
-  test("exists") {
-    EitherOps(1.ok) exists { _ == 1 } shouldEqual true
-    EitherOps(1.ok) exists { _ == 2 } shouldEqual false
-    EitherOps(0.ko) exists { _ == 1 } shouldEqual false
-  }
-
-  test("contains") {
-    EitherOps(1.ok) contains 1 shouldEqual true
-    EitherOps(1.ok) contains 2 shouldEqual false
-    EitherOps(0.ko) contains 1 shouldEqual false
-  }
-
   test("collect") {
     1.ok[String] collect { case x => x + 1 } shouldEqual 2.ok
     "".ko[Int] collect { case x => x + 1 } shouldEqual "".ko
@@ -190,14 +149,13 @@ class ValidationSpec extends FunSuite with Matchers {
   }
 
   test("allValid") {
-    Nil allValid { _: Int => "ko".ko } shouldBe a[Right[_, _]]
-    Set(1) allValid { _ == 1 trueOr "ko" } shouldEqual Vector(()).ok
+    Nil allValid { _: Int => "ko".ko[Unit] } shouldBe a[Right[_, _]]
+    List(1) allValid { _ == 1 trueOr "ko" } shouldEqual List(()).ok
     Iterable(1) allValid { _ == 1 trueOr "ko" } shouldEqual Vector(()).ok
     Iterable(0) allValid { _ == 1 trueOr "ko" } shouldEqual "ko".ko
     Iterable(0, 2, 3, 4, 5) allValid { x => x % 2 == 0 trueOr s"$x.ko" } shouldEqual "3.ko".ko
-    List(0, 1, 2) allValid[Unit, Int, List[Int]] (_.ok) shouldEqual List(0, 1, 2).ok
-    Set(0, 1) allValid[Unit, Int, Set[Int]] (_.ok) shouldEqual Set(1, 0).ok
-    Map("one" -> 1, "two" -> 2) allValid[Unit, (Int, String), Map[Int, String]] (_.swap.ok) shouldEqual Map(1 -> "one", 2 -> "two").ok
+    List(0, 1, 2) allValid (_.ok[Unit]) shouldEqual List(0, 1, 2).ok
+    Vector(0, 1) allValid (_.ok[Unit]) shouldEqual Vector(0, 1).ok
   }
 
   test("recover") {
@@ -230,12 +188,6 @@ class ValidationSpec extends FunSuite with Matchers {
     "1".ok.fallbackTo("2".ko) shouldEqual "1".ok
     "1".ko.fallbackTo("2".ok) shouldEqual "2".ok
     "1".ko.fallbackTo("2".ko) shouldEqual "1".ko
-  }
-
-  test("forall") {
-    EitherOps(1.ok) forall (_ == 1) shouldEqual true
-    EitherOps(1.ok) forall (_ == 2) shouldEqual false
-    EitherOps(1.ko) forall (_ == 1) shouldEqual true
   }
 
   test("asInstanceV") {
