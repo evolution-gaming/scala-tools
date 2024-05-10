@@ -1,4 +1,3 @@
-
 name := "scala-tools"
 
 organization := "com.evolutiongaming"
@@ -7,25 +6,28 @@ homepage := Some(new URL("http://github.com/evolution-gaming/scala-tools"))
 
 startYear := Some(2016)
 
-organizationName := "Evolution"
+organizationName := "Evolution Gaming"
 
-organizationHomepage := Some(url("http://evolution.com"))
+organizationHomepage := Some(url("http://evolutiongaming.com"))
 
-publishTo := Some(Resolver.evolutionReleases)
+bintrayOrganization := Some("evolutiongaming")
 
-scalaVersion := crossScalaVersions.value.last
+scalaVersion := crossScalaVersions.value.head
 
-crossScalaVersions := Seq("2.13.14", "2.12.19", "3.3.3")
+crossScalaVersions := Seq("2.13.0", "2.12.10")
 
-Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-no-link-warnings")
+scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-no-link-warnings")
+
+resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
 libraryDependencies ++= Seq(
-  "com.typesafe.scala-logging" %% "scala-logging"  % "3.9.5",
-  "com.evolutiongaming"        %% "executor-tools" % "1.0.4",
-  "org.scalatest"              %% "scalatest"      % "3.2.18" % Test
+  "com.github.t3hnar"          %% "scalax"         % "3.8.1",
+  "com.typesafe.scala-logging" %% "scala-logging"  % "3.9.2",
+  "com.evolutiongaming"        %% "executor-tools" % "1.0.2",
+  "org.scalatest"              %% "scalatest"      % "3.0.8" % Test
 )
 
-licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT")))
+licenses := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 
 releaseCrossBuild := true
 

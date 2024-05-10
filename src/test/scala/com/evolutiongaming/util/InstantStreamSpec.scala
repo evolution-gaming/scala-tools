@@ -1,9 +1,8 @@
 package com.evolutiongaming.util
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.{Matchers, WordSpec}
 
-class InstantStreamSpec extends AnyWordSpec with Matchers {
+class InstantStreamSpec extends WordSpec with Matchers {
 
   "InstantStream" should {
     "preserve minimal interval" in {

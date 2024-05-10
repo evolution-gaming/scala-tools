@@ -1,9 +1,8 @@
 package com.evolutiongaming.concurrent
 
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.{FunSuite, Matchers}
 
-class AtomicRefSpec extends AnyFunSuite with Matchers {
+class AtomicRefSpec extends FunSuite with Matchers {
 
   test("updateAndGet") {
     val ref = AtomicRef(0)
