@@ -2,12 +2,11 @@ package com.evolutiongaming.util
 
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.{FunSuite, Matchers}
 
 import scala.util.{Failure, Try}
 
-class ValidationSpec extends AnyFunSuite with Matchers {
+class ValidationSpec extends FunSuite with Matchers {
 
   test("ok") {
     1.ok shouldEqual Right(1)
@@ -70,9 +69,9 @@ class ValidationSpec extends AnyFunSuite with Matchers {
 
   test("onLeft") {
     var x = 0
-    1.ok[Int] onLeft { x = _ }
+    1.ok onLeft { x = _ }
     x shouldEqual 0
-    1.ko[Int] onLeft { x = _ }
+    1.ko onLeft { x = _ }
     x shouldEqual 1
   }
 
@@ -80,7 +79,7 @@ class ValidationSpec extends AnyFunSuite with Matchers {
     var x = 0
     1.ok[Int] onRight { x = _ }
     x shouldEqual 1
-    0.ko[Int] onRight { x = _ }
+    0.ko onRight { x = _ }
     x shouldEqual 1
   }
 
@@ -150,7 +149,7 @@ class ValidationSpec extends AnyFunSuite with Matchers {
   }
 
   test("allValid") {
-    Nil allValid { (_: Int) => "ko".ko[Unit] } shouldBe a[Right[_, _]]
+    Nil allValid { _: Int => "ko".ko[Unit] } shouldBe a[Right[_, _]]
     List(1) allValid { _ == 1 trueOr "ko" } shouldEqual List(()).ok
     Iterable(1) allValid { _ == 1 trueOr "ko" } shouldEqual Vector(()).ok
     Iterable(0) allValid { _ == 1 trueOr "ko" } shouldEqual "ko".ko

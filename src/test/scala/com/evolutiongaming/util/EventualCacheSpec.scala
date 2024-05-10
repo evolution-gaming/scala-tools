@@ -1,15 +1,14 @@
 package com.evolutiongaming.util
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise, TimeoutException}
 import scala.util.control.NoStackTrace
 
-class EventualCacheSpec extends AnyWordSpec with Matchers {
-  private implicit val timeout: FiniteDuration = 3.seconds
+class EventualCacheSpec extends WordSpec with Matchers {
+  private implicit val timeout = 3.seconds
 
   "EventualCache" when {
 

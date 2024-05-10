@@ -1,10 +1,9 @@
 package com.evolutiongaming.util
 
 import com.evolutiongaming.util.Tap._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.{FunSuite, Matchers}
 
-class TapSpec extends AnyFunSuite with Matchers {
+class TapSpec extends FunSuite with Matchers {
   test("tap") {
     0 tap { _ shouldEqual 0 }
     0 tap { _ => } shouldEqual 0
