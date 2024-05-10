@@ -1,7 +1,8 @@
 package com.evolutiongaming.util
 
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
-import com.github.t3hnar.scalax._
+import com.evolutiongaming.util.RichAny._
+import com.evolutiongaming.util.RichClass._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom

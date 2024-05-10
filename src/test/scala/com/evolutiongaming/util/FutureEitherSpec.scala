@@ -5,14 +5,16 @@ import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
 import org.scalatest.EitherValues._
 import org.scalatest.concurrent.ScalaFutures._
-import org.scalatest.{Assertions, FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.Assertions
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.Success
 import scala.util.control.NoStackTrace
 
-class FutureEitherSpec extends FunSuite with Matchers {
+class FutureEitherSpec extends AnyFunSuite with Matchers {
 
   implicit def ec: ExecutionContext = CurrentThreadExecutionContext
 

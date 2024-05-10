@@ -1,11 +1,12 @@
 package com.evolutiongaming.util
 
-import org.scalatest.{Matchers, WordSpec}
 import com.evolutiongaming.util.CollectionUtils._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration.{Duration => _, _}
 
-class CollectionUtilsSpec extends WordSpec with Matchers {
+class CollectionUtilsSpec extends AnyWordSpec with Matchers {
 
   "CollectionUtils.MapOpsStrict" should {
 
