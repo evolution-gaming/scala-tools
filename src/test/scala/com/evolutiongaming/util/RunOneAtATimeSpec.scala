@@ -1,14 +1,15 @@
 package com.evolutiongaming.util
 
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
-class RunOneAtATimeSpec extends WordSpec with Matchers {
+class RunOneAtATimeSpec extends AnyWordSpec with Matchers {
   "RunOneAtATime" should {
     "work for Future.successful" in new Scope {
       val future = runOneAtATime("0")(successful)

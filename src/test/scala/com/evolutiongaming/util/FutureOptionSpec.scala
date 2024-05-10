@@ -3,14 +3,16 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
-import org.scalatest.{Assertions, FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.Assertions
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.Success
 import scala.util.control.NoStackTrace
 
-class FutureOptionSpec extends FunSuite with Matchers {
+class FutureOptionSpec extends AnyFunSuite with Matchers {
 
   implicit def ec: ExecutionContext = CurrentThreadExecutionContext
 
