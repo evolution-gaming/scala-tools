@@ -147,7 +147,7 @@ object FutureOption {
         prev <- builder
         x <- f(x).future
       } yield prev ++= x
-    } map { _.result }
+    } map { _.result() }
   }
 
 

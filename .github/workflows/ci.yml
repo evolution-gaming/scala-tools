@@ -24,6 +24,9 @@ jobs:
         with:
           java-version: openjdk@1.11
 
+      - name: Check code formatting ${{ matrix.scala }}
+        run: sbt ++${{ matrix.scala }} check
+
       - name: build ${{ matrix.scala }}
         run: sbt ++${{ matrix.scala }} clean coverage test
 
@@ -33,11 +36,3 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: Scala ${{ matrix.scala }}
         run: sbt ++${{ matrix.scala }} coverageReport coverageAggregate coveralls
-
-      - name: slack
-        uses: homoluctus/slatify@master
-        if: failure() && github.ref == 'refs/heads/master'
-        with:
-          type: ${{ job.status }}
-          job_name: Build
-          url: ${{ secrets.SLACK_WEBHOOK }}

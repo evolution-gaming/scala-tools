@@ -26,7 +26,7 @@ object EventualCache {
       def fromCache = for {value <- values get key} yield Future successful Some(value)
 
       def evaluate = {
-        val newPromise = Promise[Option[V]]
+        val newPromise = Promise[Option[V]]()
         val promise = promises getOrElseUpdate(key, newPromise)
         if (promise == newPromise) future onComplete { value =>
           values get key match {
