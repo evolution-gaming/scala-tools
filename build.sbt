@@ -3,7 +3,7 @@ name := "scala-tools"
 
 organization := "com.evolutiongaming"
 
-homepage := Some(new URL("http://github.com/evolution-gaming/scala-tools"))
+homepage := Some(url("http://github.com/evolution-gaming/scala-tools"))
 
 startYear := Some(2016)
 
@@ -30,3 +30,8 @@ licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT")))
 releaseCrossBuild := true
 
 scalacOptsFailOnWarn := Some(false)
+
+//addCommandAlias("fmt", "scalafixEnable; scalafixAll; all scalafmtAll scalafmtSbt")
+//addCommandAlias("check", "all Compile/doc versionPolicyCheck scalafmtCheckAll scalafmtSbtCheck; scalafixEnable; scalafixAll --check",)
+addCommandAlias("check", "Compile/doc")
+addCommandAlias("build", "all compile test")
