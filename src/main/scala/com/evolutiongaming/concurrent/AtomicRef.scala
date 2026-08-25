@@ -17,7 +17,7 @@ object AtomicRef {
     new Impl(new AtomicReference[T](value))
   }
 
-  private def unary[T](f: T => T) = new UnaryOperator[T] {def apply(x: T): T = f(x) }
+  private def unary[T](f: T => T) = new UnaryOperator[T] { def apply(x: T): T = f(x) }
 
   private class Impl[T](ref: AtomicReference[T]) extends AtomicRef[T] {
 

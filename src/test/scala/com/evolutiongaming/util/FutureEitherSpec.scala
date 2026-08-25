@@ -3,11 +3,11 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
+import org.scalatest.Assertions
 import org.scalatest.EitherValues._
 import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.Assertions
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -29,7 +29,6 @@ class FutureEitherSpec extends AnyFunSuite with Matchers {
   private val rfe = FutureEither(rf)
 
   private val fe: FutureEither[String, String] = FutureEither(Future failed new TestException)
-
 
   test("merge") {
     re.merge.block shouldEqual "r"
@@ -389,100 +388,112 @@ class FutureEitherSpec extends AnyFunSuite with Matchers {
     FutureEither.list(List(
       1.ok.fe,
       2.ok.fe,
-      3.ok.fe)).block shouldEqual List(1, 2, 3).ok
+      3.ok.fe,
+    )).block shouldEqual List(1, 2, 3).ok
 
     FutureEither.list(List(
       (Future successful 1.ok).fe,
       (Future successful 2.ok).fe,
-      (Future successful 3.ok).fe)).block shouldEqual List(1, 2, 3).ok
+      (Future successful 3.ok).fe,
+    )).block shouldEqual List(1, 2, 3).ok
 
     FutureEither.list(List(
       1.ok.fe,
       (Future successful 2.ok).fe,
-      3.ok.fe)).block shouldEqual List(1, 2, 3).ok
+      3.ok.fe,
+    )).block shouldEqual List(1, 2, 3).ok
 
     FutureEither.list(List(
       1.ko.fe,
       2.ok.fe,
-      3.ok.fe)).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.list(List(
       1.ko.fe,
       2.ko.fe,
-      3.ok.fe)).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.list(List(
       1.ko.fe,
       (Future successful 2.ok).fe,
-      (Future successful 3.ok).fe)).block shouldEqual 1.ko
+      (Future successful 3.ok).fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.list(List(
       1.ko.fe,
       (Future successful 2.ko).fe,
-      (Future successful 3.ok).fe)).block shouldEqual 1.ko
+      (Future successful 3.ok).fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.list(List(
       1.ko.fe,
       (Future successful 2.ok).fe,
-      3.ok.fe)).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.list(List(
       (Future successful 1.ko).fe,
       (Future successful 2.ok).fe,
-      3.ok.fe)).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
   }
 
   test("sequence") {
     FutureEither.sequence(List(
       1.ok[Unit].fe,
       2.ok[Unit].fe,
-      3.ok[Unit].fe)
-    ).block shouldEqual Seq(1, 2, 3).ok
+      3.ok[Unit].fe,
+    )).block shouldEqual Seq(1, 2, 3).ok
 
     FutureEither.sequence(List(
       (Future successful 1.ok[Unit]).fe,
       (Future successful 2.ok[Unit]).fe,
-      (Future successful 3.ok[Unit]).fe)
-    ).block shouldEqual Seq(1, 2, 3).ok
+      (Future successful 3.ok[Unit]).fe,
+    )).block shouldEqual Seq(1, 2, 3).ok
 
     FutureEither.sequence(List(
       1.ok[Unit].fe,
       (Future successful 2.ok).fe,
-      3.ok[Unit].fe)
-    ).block shouldEqual Seq(1, 2, 3).ok
+      3.ok[Unit].fe,
+    )).block shouldEqual Seq(1, 2, 3).ok
 
     FutureEither.sequence(List(
       1.ko.fe,
       2.ok.fe,
-      3.ok.fe)
-    ).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
-    FutureEither.sequence(List(1.ko.fe,
+    FutureEither.sequence(List(
+      1.ko.fe,
       2.ko.fe,
-      3.ok.fe)
-    ).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.sequence(List(
       1.ko.fe,
       (Future successful 2.ok).fe,
-      (Future successful 3.ok).fe)).block shouldEqual 1.ko
+      (Future successful 3.ok).fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.sequence(List(
       1.ko.fe,
       (Future successful 2.ko).fe,
-      (Future successful 3.ok).fe)
-    ).block shouldEqual 1.ko
+      (Future successful 3.ok).fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.sequence(List(
       1.ko.fe,
       (Future successful 2.ok).fe,
-      3.ok.fe)
-    ).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
 
     FutureEither.sequence(List(
       (Future successful 1.ko).fe,
       (Future successful 2.ok).fe,
-      3.ok.fe)).block shouldEqual 1.ko
+      3.ok.fe,
+    )).block shouldEqual 1.ko
   }
 
   test("transform") {
@@ -508,13 +519,13 @@ class FutureEitherSpec extends AnyFunSuite with Matchers {
     x shouldEqual 4
   }
 
-
   test("toString") {
     le.toString shouldEqual "FutureEither(Left(l))"
     re.toString shouldEqual "FutureEither(Right(r))"
     lfe.toString shouldEqual "FutureEither(Left(l))"
     rfe.toString shouldEqual "FutureEither(Right(r))"
-    FutureEither(Future.failed(new TestException)).toString shouldEqual "FutureEither(com.evolutiongaming.util.FutureEitherSpec$TestException: test)"
+    FutureEither(Future.failed(new TestException)).toString shouldEqual
+      "FutureEither(com.evolutiongaming.util.FutureEitherSpec$TestException: test)"
     val promise = Promise[Either[String, String]]
     promise.future.fe.toString shouldEqual "FutureEither(<not completed>)"
   }

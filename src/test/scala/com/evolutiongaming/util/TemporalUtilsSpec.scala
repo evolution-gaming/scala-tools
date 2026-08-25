@@ -1,11 +1,11 @@
 package com.evolutiongaming.util
 
-import java.time.{Duration, Instant, LocalTime}
-
-import scala.concurrent.duration.{Duration => _, _}
 import TemporalUtils._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import java.time.{Duration, Instant, LocalTime}
+import scala.concurrent.duration.{Duration => _, _}
 
 class TemporalUtilsSpec extends AnyWordSpec with Matchers {
 
