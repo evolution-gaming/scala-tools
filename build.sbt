@@ -1,4 +1,3 @@
-
 name := "scala-tools"
 
 organization := "com.evolutiongaming"
@@ -15,23 +14,22 @@ publishTo := Some(Resolver.evolutionReleases)
 
 scalaVersion := crossScalaVersions.value.last
 
-crossScalaVersions := Seq("2.13.14", "2.12.19", "3.3.3")
+crossScalaVersions := Seq("2.13.18", "3.3.8")
 
 Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-no-link-warnings")
 
 libraryDependencies ++= Seq(
-  "com.typesafe.scala-logging" %% "scala-logging"  % "3.9.5",
-  "com.evolutiongaming"        %% "executor-tools" % "1.0.4",
-  "org.scalatest"              %% "scalatest"      % "3.2.18" % Test
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+  "com.evolutiongaming" %% "executor-tools" % "1.0.4",
+  "org.scalatest" %% "scalatest" % "3.2.20" % Test,
 )
 
 licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT")))
 
-releaseCrossBuild := true
-
 scalacOptsFailOnWarn := Some(false)
 
-//addCommandAlias("fmt", "scalafixEnable; scalafixAll; all scalafmtAll scalafmtSbt")
-//addCommandAlias("check", "all Compile/doc versionPolicyCheck scalafmtCheckAll scalafmtSbtCheck; scalafixEnable; scalafixAll --check",)
-addCommandAlias("check", "Compile/doc")
+versionPolicyIntention := Compatibility.BinaryCompatible
+
+addCommandAlias("check", "all scalafmtCheckRepo versionPolicyCheck Compile/doc")
+addCommandAlias("fmt", "scalafmtRepo")
 addCommandAlias("build", "all compile test")

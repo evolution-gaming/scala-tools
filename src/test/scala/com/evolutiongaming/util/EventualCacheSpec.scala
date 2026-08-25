@@ -27,7 +27,7 @@ class EventualCacheSpec extends AnyWordSpec with Matchers {
     "getOrUpdate" should {
       "return value if found" in new Scope {
         cache.update(0, "0")
-        val future = cache.getOrUpdate(0) {throw TestException}
+        val future = cache.getOrUpdate(0) { throw TestException }
         Await.result(future, timeout) shouldEqual Some("0")
       }
 
@@ -97,7 +97,7 @@ class EventualCacheSpec extends AnyWordSpec with Matchers {
     "getOrUpdateAwait" should {
       "return value if found" in new Scope {
         cache.update(0, "0")
-        cache.getOrUpdateAwait(0) {throw TestException} shouldEqual Some("0")
+        cache.getOrUpdateAwait(0) { throw TestException } shouldEqual Some("0")
       }
 
       "return evaluated some value" in new Scope {

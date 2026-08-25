@@ -3,9 +3,9 @@ package com.evolutiongaming.util
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.util.Validation._
 import org.scalactic.Equality
+import org.scalatest.Assertions
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.Assertions
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -33,24 +33,66 @@ class FutureOptionSpec extends AnyFunSuite with Matchers {
   }
 
   test("flatMap") {
-    (for {_ <- so; _ <- so} yield 1).block shouldEqual Some(1)
+    (for {
+      _ <- so
+      _ <- so
+    } yield 1).block shouldEqual Some(1)
 
-    (for {_ <- so; _ <- no} yield 1).block shouldEqual None
-    (for {_ <- no; _ <- so} yield 1).block shouldEqual None
-    (for {_ <- no; _ <- no} yield 1).block shouldEqual None
-    (for {_ <- so; _ <- nfo} yield 1).block shouldEqual None
-    (for {_ <- nfo; _ <- so} yield 1).block shouldEqual None
+    (for {
+      _ <- so
+      _ <- no
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- no
+      _ <- so
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- no
+      _ <- no
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- so
+      _ <- nfo
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- nfo
+      _ <- so
+    } yield 1).block shouldEqual None
 
-    (for {_ <- sfo; _ <- sfo} yield 1).block shouldEqual Some(1)
+    (for {
+      _ <- sfo
+      _ <- sfo
+    } yield 1).block shouldEqual Some(1)
 
-    (for {_ <- sfo; _ <- nfo} yield 1).block shouldEqual None
-    (for {_ <- nfo; _ <- sfo} yield 1).block shouldEqual None
-    (for {_ <- nfo; _ <- nfo} yield 1).block shouldEqual None
-    (for {_ <- sfo; _ <- no} yield 1).block shouldEqual None
-    (for {_ <- no; _ <- sfo} yield 1).block shouldEqual None
+    (for {
+      _ <- sfo
+      _ <- nfo
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- nfo
+      _ <- sfo
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- nfo
+      _ <- nfo
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- sfo
+      _ <- no
+    } yield 1).block shouldEqual None
+    (for {
+      _ <- no
+      _ <- sfo
+    } yield 1).block shouldEqual None
 
-    (for {_ <- so; _ <- sfo} yield 1).block shouldEqual Some(1)
-    (for {_ <- sfo; _ <- so} yield 1).block shouldEqual Some(1)
+    (for {
+      _ <- so
+      _ <- sfo
+    } yield 1).block shouldEqual Some(1)
+    (for {
+      _ <- sfo
+      _ <- so
+    } yield 1).block shouldEqual Some(1)
   }
 
   test("fold") {
@@ -135,10 +177,22 @@ class FutureOptionSpec extends AnyFunSuite with Matchers {
   }
 
   test("withFilter") {
-    (for {x <- so if x == ""; if x == ""} yield x).block shouldEqual Some("")
-    (for {x <- no if x == ""; if x == ""} yield x).block shouldEqual None
-    (for {x <- sfo if x == ""; if x == ""} yield x).block shouldEqual Some("")
-    (for {x <- nfo if x == ""; if x == ""} yield x).block shouldEqual None
+    (for {
+      x <- so if x == ""
+      if x == ""
+    } yield x).block shouldEqual Some("")
+    (for {
+      x <- no if x == ""
+      if x == ""
+    } yield x).block shouldEqual None
+    (for {
+      x <- sfo if x == ""
+      if x == ""
+    } yield x).block shouldEqual Some("")
+    (for {
+      x <- nfo if x == ""
+      if x == ""
+    } yield x).block shouldEqual None
 
     (for {
       x <- so if x == ""
